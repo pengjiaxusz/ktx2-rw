@@ -37,21 +37,39 @@ fn main() {
     // Tell cargo to invalidate the built crate whenever the wrapper changes
     println!("cargo:rerun-if-changed=libktx2-sys/include/ktx.h");
 
-    // The bindgen::Builder is the main entry point
-    // to bindgen, and lets you build up options for
-    // the resulting bindings.
-    let bindings = bindgen::Builder::default()
-        // The input header we would like to generate
-        // bindings for.
+    // Configure bindgen for cross-compilation
+    let target = env::var("TARGET").unwrap();
+    let mut builder = bindgen::Builder::default()
         .header("libktx2-sys/include/ktx.h")
-        // Add include path
         .clang_arg("-Ilibktx2-sys/include")
-        // Tell cargo to invalidate the built crate whenever any of the
-        // included header files changed.
-        .parse_callbacks(Box::new(bindgen::CargoCallbacks::new()))
-        // Finish the builder and generate the bindings.
+        .parse_callbacks(Box::new(bindgen::CargoCallbacks::new()));
+
+    // Add target-specific configuration
+    if target.contains("windows") {
+        // For Windows cross-compilation, use MinGW headers
+        if let Ok(mingw_path) = env::var("MINGW_PREFIX") {
+            builder = builder
+                .clang_arg(format!("-I{}/include", mingw_path))
+                .clang_arg(format!("--sysroot={}", mingw_path));
+        } else {
+            // Use system MinGW installation
+            let mingw_sysroot = if target.contains("x86_64") {
+                "/opt/homebrew/opt/mingw-w64/toolchain-x86_64/x86_64-w64-mingw32"
+            } else {
+                "/opt/homebrew/opt/mingw-w64/toolchain-i686/i686-w64-mingw32"
+            };
+            
+            builder = builder
+                .clang_arg("-target")
+                .clang_arg(&target)
+                .clang_arg(format!("--sysroot={}", mingw_sysroot))
+                .clang_arg(format!("-I{}/include", mingw_sysroot));
+        }
+    }
+    
+    // Generate the bindings
+    let bindings = builder
         .generate()
-        // Unwrap the Result and panic on failure.
         .expect("Unable to generate bindings");
 
     // Write the bindings to the $OUT_DIR/bindings.rs file.
