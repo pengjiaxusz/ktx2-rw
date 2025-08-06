@@ -29,7 +29,10 @@ fn main() {
             println!("cargo:rustc-link-lib=stdc++");
         }
         "windows" => {
-            // Windows uses MSVC runtime by default
+            // For MinGW cross-compilation, link C++ standard library
+            println!("cargo:rustc-link-lib=stdc++");
+            println!("cargo:rustc-link-lib=gcc_s");
+            println!("cargo:rustc-link-lib=gcc");
         }
         _ => {}
     }
