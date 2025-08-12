@@ -18,7 +18,7 @@ fn main() {
         ("macos", "x86_64", _) => "ktx2-macos-x64",
         ("macos", "aarch64", _) => "ktx2-macos-aarch64",
         ("windows", "x86_64", "gnu") => "ktx2-windows-x64-gnu",
-        ("windows", "x86_64", _) => "ktx2-windows-x64", // default to MSVC for windows
+        ("windows", _, _) => panic!("Only Windows GNU targets are supported. MSVC is not supported."),
         _ => panic!("Unsupported platform: {target_os}-{target_arch}-{target_env}"),
     };
 
@@ -43,21 +43,15 @@ fn main() {
             println!("cargo:rustc-link-lib=pthread");
         }
         "windows" => {
-            let target = env::var("TARGET").unwrap_or_default();
-            if target.contains("gnu") {
-                // For Windows GNU (MinGW) targets
-                // The library might have been compiled with libc++ but we need to link with available libs
-                println!("cargo:rustc-link-lib=stdc++");
-                println!("cargo:rustc-link-lib=gcc_s");
-                println!("cargo:rustc-link-lib=gcc");
-                // Add pthread and additional Windows libraries
-                println!("cargo:rustc-link-lib=pthread");
-                println!("cargo:rustc-link-lib=ssp");
-                println!("cargo:rustc-link-lib=mingw32");
-            } else {
-                // For Windows MSVC targets
-                println!("cargo:rustc-link-lib=msvcrt");
-            }
+            // For Windows GNU (MinGW) targets only
+            // The library might have been compiled with libc++ but we need to link with available libs
+            println!("cargo:rustc-link-lib=stdc++");
+            println!("cargo:rustc-link-lib=gcc_s");
+            println!("cargo:rustc-link-lib=gcc");
+            // Add pthread and additional Windows libraries
+            println!("cargo:rustc-link-lib=pthread");
+            println!("cargo:rustc-link-lib=ssp");
+            println!("cargo:rustc-link-lib=mingw32");
         }
         _ => {}
     }
