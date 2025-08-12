@@ -34,7 +34,8 @@ fn main() {
             println!("cargo:rustc-link-lib=c++");
         }
         "linux" => {
-            // Try libc++ first (what the library was compiled with), fallback to libstdc++
+            // The library was compiled with libc++, so we need to link with it
+            // Try libc++ first (what the library was compiled with)
             println!("cargo:rustc-link-lib=c++");
             println!("cargo:rustc-link-lib=c++abi");
             println!("cargo:rustc-link-lib=m");

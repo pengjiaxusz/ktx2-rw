@@ -49,6 +49,12 @@ jobs:
         path: target
         key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
 
+    - name: Install libc++ (Linux)
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libc++-dev libc++abi-dev
+
     - name: Check formatting
       run: cargo fmt --all -- --check
 
@@ -90,6 +96,12 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y musl-tools
+
+    - name: Install libc++ (Linux)
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libc++-dev libc++abi-dev
 
     - name: Install MinGW toolchain
       if: matrix.target == 'x86_64-pc-windows-gnu'
