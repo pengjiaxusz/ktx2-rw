@@ -103,7 +103,7 @@ impl From<ktx_error_code_e> for Error {
             ktx_error_code_e_KTX_LIBRARY_NOT_LINKED => Error::LibraryNotLinked,
             ktx_error_code_e_KTX_DECOMPRESS_LENGTH_ERROR => Error::DecompressLengthError,
             ktx_error_code_e_KTX_DECOMPRESS_CHECKSUM_ERROR => Error::DecompressChecksumError,
-            _ => Error::Other(code),
+            _ => Error::Other(code as u32),
         }
     }
 }
