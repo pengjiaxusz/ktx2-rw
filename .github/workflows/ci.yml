@@ -91,6 +91,11 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y musl-tools
 
+    - name: Install MinGW toolchain
+      if: matrix.target == 'x86_64-pc-windows-gnu'
+      run: |
+        choco install mingw
+
     - name: Cache cargo
       uses: actions/cache@v4
       with:

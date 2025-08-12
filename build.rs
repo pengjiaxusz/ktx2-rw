@@ -69,15 +69,15 @@ fn main() {
         .clang_arg("-Ilibktx2-sys/include")
         .parse_callbacks(Box::new(bindgen::CargoCallbacks::new()));
 
-    // Add target-specific configuration
-    if target.contains("windows") {
-        // For Windows cross-compilation, use MinGW headers
+    // Add target-specific configuration for cross-compilation
+    if target.contains("windows") && !cfg!(windows) {
+        // Only apply special configuration when cross-compiling to Windows from another OS
         if let Ok(mingw_path) = env::var("MINGW_PREFIX") {
             builder = builder
                 .clang_arg(format!("-I{}/include", mingw_path))
                 .clang_arg(format!("--sysroot={}", mingw_path));
-        } else {
-            // Use system MinGW installation
+        } else if cfg!(target_os = "macos") {
+            // Use system MinGW installation on macOS
             let mingw_sysroot = if target.contains("x86_64") {
                 "/opt/homebrew/opt/mingw-w64/toolchain-x86_64/x86_64-w64-mingw32"
             } else {
