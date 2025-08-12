@@ -7,8 +7,12 @@ fn main() {
     let target_arch = env::var("CARGO_CFG_TARGET_ARCH").unwrap();
 
     let target_env = env::var("CARGO_CFG_TARGET_ENV").unwrap_or_default();
-    
-    let lib_name = match (target_os.as_str(), target_arch.as_str(), target_env.as_str()) {
+
+    let lib_name = match (
+        target_os.as_str(),
+        target_arch.as_str(),
+        target_env.as_str(),
+    ) {
         ("linux", "x86_64", "musl") => "ktx2-linux-x64-musl",
         ("linux", "x86_64", _) => "ktx2-linux-x64-glibc", // default to glibc for linux
         ("macos", "x86_64", _) => "ktx2-macos-x64",
@@ -76,7 +80,7 @@ fn main() {
             } else {
                 "/opt/homebrew/opt/mingw-w64/toolchain-i686/i686-w64-mingw32"
             };
-            
+
             builder = builder
                 .clang_arg("-target")
                 .clang_arg(&target)
@@ -84,11 +88,9 @@ fn main() {
                 .clang_arg(format!("-I{}/include", mingw_sysroot));
         }
     }
-    
+
     // Generate the bindings
-    let bindings = builder
-        .generate()
-        .expect("Unable to generate bindings");
+    let bindings = builder.generate().expect("Unable to generate bindings");
 
     // Write the bindings to the $OUT_DIR/bindings.rs file.
     let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
