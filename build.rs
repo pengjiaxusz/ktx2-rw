@@ -35,6 +35,9 @@ fn main() {
         }
         "linux" => {
             println!("cargo:rustc-link-lib=stdc++");
+            println!("cargo:rustc-link-lib=m");
+            println!("cargo:rustc-link-lib=dl");
+            println!("cargo:rustc-link-lib=pthread");
         }
         "windows" => {
             let target = env::var("TARGET").unwrap_or_default();
