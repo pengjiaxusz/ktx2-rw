@@ -18,7 +18,9 @@ fn main() {
         ("macos", "x86_64", _) => "ktx2-macos-x64",
         ("macos", "aarch64", _) => "ktx2-macos-aarch64",
         ("windows", "x86_64", "gnu") => "ktx2-windows-x64-gnu",
-        ("windows", _, _) => panic!("Only Windows GNU targets are supported. MSVC is not supported."),
+        ("windows", _, _) => {
+            panic!("Only Windows GNU targets are supported. MSVC is not supported.")
+        }
         _ => panic!("Unsupported platform: {target_os}-{target_arch}-{target_env}"),
     };
 
