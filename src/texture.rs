@@ -55,7 +55,12 @@ impl Ktx2Texture {
         let result = unsafe {
             ktxTexture2_CreateFromNamedFile(
                 c_path.as_ptr(),
-                ktxTextureCreateFlagBits_KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT as u32,
+                {
+                    #[cfg(windows)]
+                    { ktxTextureCreateFlagBits_KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT as u32 }
+                    #[cfg(not(windows))]
+                    { ktxTextureCreateFlagBits_KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT }
+                },
                 &mut texture,
             )
         };
@@ -74,7 +79,12 @@ impl Ktx2Texture {
             ktxTexture2_CreateFromMemory(
                 data.as_ptr(),
                 data.len(),
-                ktxTextureCreateFlagBits_KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT as u32,
+                {
+                    #[cfg(windows)]
+                    { ktxTextureCreateFlagBits_KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT as u32 }
+                    #[cfg(not(windows))]
+                    { ktxTextureCreateFlagBits_KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT }
+                },
                 &mut texture,
             )
         };
