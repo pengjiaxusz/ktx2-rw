@@ -105,9 +105,13 @@ impl From<ktx_error_code_e> for Error {
             ktx_error_code_e_KTX_DECOMPRESS_CHECKSUM_ERROR => Error::DecompressChecksumError,
             _ => Error::Other({
                 #[cfg(windows)]
-                { code as u32 }
+                {
+                    code as u32
+                }
                 #[cfg(not(windows))]
-                { code }
+                {
+                    code
+                }
             }),
         }
     }

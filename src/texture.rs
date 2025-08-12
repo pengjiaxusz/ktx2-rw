@@ -57,9 +57,13 @@ impl Ktx2Texture {
                 c_path.as_ptr(),
                 {
                     #[cfg(windows)]
-                    { ktxTextureCreateFlagBits_KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT as u32 }
+                    {
+                        ktxTextureCreateFlagBits_KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT as u32
+                    }
                     #[cfg(not(windows))]
-                    { ktxTextureCreateFlagBits_KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT }
+                    {
+                        ktxTextureCreateFlagBits_KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT
+                    }
                 },
                 &mut texture,
             )
@@ -81,9 +85,13 @@ impl Ktx2Texture {
                 data.len(),
                 {
                     #[cfg(windows)]
-                    { ktxTextureCreateFlagBits_KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT as u32 }
+                    {
+                        ktxTextureCreateFlagBits_KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT as u32
+                    }
                     #[cfg(not(windows))]
-                    { ktxTextureCreateFlagBits_KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT }
+                    {
+                        ktxTextureCreateFlagBits_KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT
+                    }
                 },
                 &mut texture,
             )
