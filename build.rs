@@ -226,21 +226,11 @@ fn configure_cmake_for_target(
                         cmake_config.define("CMAKE_GENERATOR_PLATFORM", "ARM64");
                     }
 
-                    // Configure MSVC runtime library to match Rust's dynamic CRT
-                    cmake_config.define("CMAKE_MSVC_RUNTIME_LIBRARY", "MultiThreadedDLL");
+                    // Use KTX-Software's official MSVC configuration approach
+                    // Mimic their Windows CI build exactly
 
-                    // Use safe MSVC release settings with aggressive debug disabling
-                    cmake_config.define("CMAKE_BUILD_TYPE", "Release");
-
-                    // Completely disable optimization to avoid MSVC math issues
-                    let flags = "/MD /Od /DNDEBUG /D_CRT_SECURE_NO_WARNINGS /fp:strict /DBASISU_NO_ITERATOR_DEBUG_LEVEL /D_ITERATOR_DEBUG_LEVEL=0 /D_SECURE_SCL=0 /D_HAS_ITERATOR_DEBUGGING=0";
-
-                    cmake_config.define("CMAKE_C_FLAGS", flags);
-                    cmake_config.define("CMAKE_CXX_FLAGS", flags);
-                    cmake_config.define("CMAKE_C_FLAGS_RELEASE", flags);
-                    cmake_config.define("CMAKE_CXX_FLAGS_RELEASE", flags);
-                    cmake_config.define("CMAKE_C_FLAGS_DEBUG", flags);
-                    cmake_config.define("CMAKE_CXX_FLAGS_DEBUG", flags);
+                    // Add Basis Universal SSE support like their CI
+                    cmake_config.define("BASISU_SUPPORT_SSE", "ON");
                 } else {
                     // Cross-compiling MSVC from non-Windows is not supported
                     panic!("Cross-compiling to Windows MSVC targets from non-Windows platforms is not supported. Use GNU targets instead (e.g., x86_64-pc-windows-gnu)");
