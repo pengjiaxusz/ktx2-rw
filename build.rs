@@ -373,9 +373,7 @@ fn setup_bindgen(out_dir: &Path, target: &str, _ktx_build_dir: &Path) {
             let android_api = "21"; // Minimum API level we're targeting
             let arch_triple = if target.contains("aarch64") {
                 "aarch64-linux-android"
-            } else if target.contains("armv7") {
-                "arm-linux-androideabi"
-            } else if target.contains("arm") {
+            } else if target.contains("armv7") || target.contains("arm") {
                 "arm-linux-androideabi"
             } else if target.contains("x86_64") {
                 "x86_64-linux-android"
