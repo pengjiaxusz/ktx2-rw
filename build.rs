@@ -226,13 +226,37 @@ fn configure_cmake_for_target(
                         cmake_config.define("CMAKE_GENERATOR_PLATFORM", "ARM64");
                     }
 
-                    // Configure MSVC runtime library to avoid CRT conflicts
-                    // Use MultiThreadedDLL for release builds to match Rust's default
-                    cmake_config.define("CMAKE_MSVC_RUNTIME_LIBRARY", "MultiThreadedDLL");
+                    // Configure MSVC runtime library - use static linking to avoid CRT conflicts
+                    cmake_config.define("CMAKE_MSVC_RUNTIME_LIBRARY", "MultiThreaded");
 
-                    // Disable debug assertions to avoid CrtDbgReport dependencies
-                    cmake_config.define("CMAKE_C_FLAGS_RELEASE", "/MD /O2 /Ob2 /DNDEBUG");
-                    cmake_config.define("CMAKE_CXX_FLAGS_RELEASE", "/MD /O2 /Ob2 /DNDEBUG");
+                    // Force release mode and disable all debug features
+                    cmake_config.define("CMAKE_BUILD_TYPE", "Release");
+                    cmake_config.define(
+                        "CMAKE_C_FLAGS",
+                        "/MT /O2 /DNDEBUG /D_CRT_SECURE_NO_WARNINGS",
+                    );
+                    cmake_config.define(
+                        "CMAKE_CXX_FLAGS",
+                        "/MT /O2 /DNDEBUG /D_CRT_SECURE_NO_WARNINGS",
+                    );
+                    cmake_config.define(
+                        "CMAKE_C_FLAGS_RELEASE",
+                        "/MT /O2 /DNDEBUG /D_CRT_SECURE_NO_WARNINGS",
+                    );
+                    cmake_config.define(
+                        "CMAKE_CXX_FLAGS_RELEASE",
+                        "/MT /O2 /DNDEBUG /D_CRT_SECURE_NO_WARNINGS",
+                    );
+
+                    // Disable debug configurations entirely
+                    cmake_config.define(
+                        "CMAKE_C_FLAGS_DEBUG",
+                        "/MT /O2 /DNDEBUG /D_CRT_SECURE_NO_WARNINGS",
+                    );
+                    cmake_config.define(
+                        "CMAKE_CXX_FLAGS_DEBUG",
+                        "/MT /O2 /DNDEBUG /D_CRT_SECURE_NO_WARNINGS",
+                    );
                 } else {
                     // Cross-compiling MSVC from non-Windows is not supported
                     panic!("Cross-compiling to Windows MSVC targets from non-Windows platforms is not supported. Use GNU targets instead (e.g., x86_64-pc-windows-gnu)");
@@ -333,8 +357,7 @@ fn link_system_libraries(target_os: &str, target_env: &str) {
                 // MSVC environment
                 // MSVC uses different library names and some libraries are built-in
                 // The C++ runtime is automatically linked by the linker
-                // Add debug CRT library to resolve CrtDbgReport
-                println!("cargo:rustc-link-lib=msvcrtd");
+                // No additional system libraries needed for basic functionality
             }
         }
         "android" => {
