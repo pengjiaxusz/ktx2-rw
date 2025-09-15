@@ -41,7 +41,7 @@ fn main() {
     }
 
     // Link required system libraries
-    link_system_libraries(&target_os);
+    link_system_libraries(&target_os, &target_env);
 
     // Configure bindgen
     setup_bindgen(&out_dir, &target, &ktx_build_dir);
@@ -301,7 +301,7 @@ fn get_lib_name(target_os: &str) -> &'static str {
     }
 }
 
-fn link_system_libraries(target_os: &str) {
+fn link_system_libraries(target_os: &str, target_env: &str) {
     match target_os {
         "macos" => {
             println!("cargo:rustc-link-lib=c++");
@@ -313,12 +313,20 @@ fn link_system_libraries(target_os: &str) {
             println!("cargo:rustc-link-lib=pthread");
         }
         "windows" => {
-            println!("cargo:rustc-link-lib=stdc++");
-            println!("cargo:rustc-link-lib=gcc_s");
-            println!("cargo:rustc-link-lib=gcc");
-            println!("cargo:rustc-link-lib=pthread");
-            println!("cargo:rustc-link-lib=ssp");
-            println!("cargo:rustc-link-lib=mingw32");
+            if target_env == "gnu" {
+                // MinGW/GNU environment
+                println!("cargo:rustc-link-lib=stdc++");
+                println!("cargo:rustc-link-lib=gcc_s");
+                println!("cargo:rustc-link-lib=gcc");
+                println!("cargo:rustc-link-lib=pthread");
+                println!("cargo:rustc-link-lib=ssp");
+                println!("cargo:rustc-link-lib=mingw32");
+            } else {
+                // MSVC environment
+                // MSVC uses different library names and some libraries are built-in
+                // The C++ runtime is automatically linked by the linker
+                // No additional system libraries needed for basic functionality
+            }
         }
         "android" => {
             println!("cargo:rustc-link-lib=c++");
