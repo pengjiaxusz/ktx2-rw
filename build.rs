@@ -229,36 +229,36 @@ fn configure_cmake_for_target(
                     // Configure MSVC runtime library to match Rust's dynamic CRT
                     cmake_config.define("CMAKE_MSVC_RUNTIME_LIBRARY", "MultiThreadedDLL");
 
-                    // Force release mode and disable all debug features
-                    cmake_config.define("CMAKE_BUILD_TYPE", "Release");
-
-                    // Use safe optimization and floating-point handling for MSVC
+                    // Use most conservative MSVC settings to avoid any optimization issues
                     cmake_config.define(
                         "CMAKE_C_FLAGS",
-                        "/MD /O1 /DNDEBUG /D_CRT_SECURE_NO_WARNINGS /fp:precise",
+                        "/MD /Od /D_CRT_SECURE_NO_WARNINGS /fp:strict /Zi",
                     );
                     cmake_config.define(
                         "CMAKE_CXX_FLAGS",
-                        "/MD /O1 /DNDEBUG /D_CRT_SECURE_NO_WARNINGS /fp:precise",
+                        "/MD /Od /D_CRT_SECURE_NO_WARNINGS /fp:strict /Zi",
                     );
                     cmake_config.define(
                         "CMAKE_C_FLAGS_RELEASE",
-                        "/MD /O1 /DNDEBUG /D_CRT_SECURE_NO_WARNINGS /fp:precise",
+                        "/MD /Od /D_CRT_SECURE_NO_WARNINGS /fp:strict /Zi",
                     );
                     cmake_config.define(
                         "CMAKE_CXX_FLAGS_RELEASE",
-                        "/MD /O1 /DNDEBUG /D_CRT_SECURE_NO_WARNINGS /fp:precise",
+                        "/MD /Od /D_CRT_SECURE_NO_WARNINGS /fp:strict /Zi",
                     );
 
-                    // Use safe flags for debug configurations too
+                    // Also force debug mode for all configurations
                     cmake_config.define(
                         "CMAKE_C_FLAGS_DEBUG",
-                        "/MD /Od /D_CRT_SECURE_NO_WARNINGS /fp:precise",
+                        "/MD /Od /D_CRT_SECURE_NO_WARNINGS /fp:strict /Zi",
                     );
                     cmake_config.define(
                         "CMAKE_CXX_FLAGS_DEBUG",
-                        "/MD /Od /D_CRT_SECURE_NO_WARNINGS /fp:precise",
+                        "/MD /Od /D_CRT_SECURE_NO_WARNINGS /fp:strict /Zi",
                     );
+
+                    // Force debug build to get better error reporting
+                    cmake_config.define("CMAKE_BUILD_TYPE", "Debug");
                 } else {
                     // Cross-compiling MSVC from non-Windows is not supported
                     panic!("Cross-compiling to Windows MSVC targets from non-Windows platforms is not supported. Use GNU targets instead (e.g., x86_64-pc-windows-gnu)");
