@@ -232,8 +232,8 @@ fn configure_cmake_for_target(
                     // Use safe MSVC release settings with aggressive debug disabling
                     cmake_config.define("CMAKE_BUILD_TYPE", "Release");
 
-                    // Force disable all possible debug features and assertions
-                    let flags = "/MD /O1 /DNDEBUG /D_CRT_SECURE_NO_WARNINGS /fp:strict /DBASISU_NO_ITERATOR_DEBUG_LEVEL /D_ITERATOR_DEBUG_LEVEL=0 /D_SECURE_SCL=0 /D_HAS_ITERATOR_DEBUGGING=0";
+                    // Completely disable optimization to avoid MSVC math issues
+                    let flags = "/MD /Od /DNDEBUG /D_CRT_SECURE_NO_WARNINGS /fp:strict /DBASISU_NO_ITERATOR_DEBUG_LEVEL /D_ITERATOR_DEBUG_LEVEL=0 /D_SECURE_SCL=0 /D_HAS_ITERATOR_DEBUGGING=0";
 
                     cmake_config.define("CMAKE_C_FLAGS", flags);
                     cmake_config.define("CMAKE_CXX_FLAGS", flags);
