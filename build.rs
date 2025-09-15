@@ -225,6 +225,14 @@ fn configure_cmake_for_target(
                     } else if target_arch == "aarch64" {
                         cmake_config.define("CMAKE_GENERATOR_PLATFORM", "ARM64");
                     }
+
+                    // Configure MSVC runtime library to avoid CRT conflicts
+                    // Use MultiThreadedDLL for release builds to match Rust's default
+                    cmake_config.define("CMAKE_MSVC_RUNTIME_LIBRARY", "MultiThreadedDLL");
+
+                    // Disable debug assertions to avoid CrtDbgReport dependencies
+                    cmake_config.define("CMAKE_C_FLAGS_RELEASE", "/MD /O2 /Ob2 /DNDEBUG");
+                    cmake_config.define("CMAKE_CXX_FLAGS_RELEASE", "/MD /O2 /Ob2 /DNDEBUG");
                 } else {
                     // Cross-compiling MSVC from non-Windows is not supported
                     panic!("Cross-compiling to Windows MSVC targets from non-Windows platforms is not supported. Use GNU targets instead (e.g., x86_64-pc-windows-gnu)");
@@ -325,7 +333,8 @@ fn link_system_libraries(target_os: &str, target_env: &str) {
                 // MSVC environment
                 // MSVC uses different library names and some libraries are built-in
                 // The C++ runtime is automatically linked by the linker
-                // No additional system libraries needed for basic functionality
+                // Add debug CRT library to resolve CrtDbgReport
+                println!("cargo:rustc-link-lib=msvcrtd");
             }
         }
         "android" => {
