@@ -396,10 +396,7 @@ fn setup_bindgen(out_dir: &Path, target: &str, _ktx_build_dir: &Path) {
                 "linux-x86_64" // fallback
             };
 
-            let sysroot = format!(
-                "{}/toolchains/llvm/prebuilt/{}/sysroot",
-                ndk_path, host_tag
-            );
+            let sysroot = format!("{}/toolchains/llvm/prebuilt/{}/sysroot", ndk_path, host_tag);
 
             builder = builder
                 .clang_arg("-target")

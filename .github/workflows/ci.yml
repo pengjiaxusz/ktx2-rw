@@ -21,6 +21,8 @@ jobs:
             target: x86_64-unknown-linux-gnu
           - os: macos-latest
             target: x86_64-apple-darwin
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
 
     steps:
       - uses: actions/checkout@v4
@@ -84,10 +86,6 @@ jobs:
           - os: macos-latest
             target: aarch64-apple-darwin
 
-          # Windows targets
-          - os: windows-latest
-            target: x86_64-pc-windows-gnu
-
           # iOS targets (from macOS)
           - os: macos-latest
             target: aarch64-apple-ios
@@ -98,6 +96,10 @@ jobs:
 
           # Windows from macOS (cross-compilation test)
           - os: macos-latest
+            target: x86_64-pc-windows-gnu
+
+          # Windows native GNU (alternative to MSVC)
+          - os: windows-latest
             target: x86_64-pc-windows-gnu
 
     runs-on: ${{ matrix.os }}
