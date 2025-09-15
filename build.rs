@@ -232,32 +232,32 @@ fn configure_cmake_for_target(
                     // Force release mode and disable all debug features
                     cmake_config.define("CMAKE_BUILD_TYPE", "Release");
 
-                    // Use dynamic CRT to match Rust, disable debug features completely
+                    // Use safe optimization and floating-point handling for MSVC
                     cmake_config.define(
                         "CMAKE_C_FLAGS",
-                        "/MD /O2 /DNDEBUG /D_CRT_SECURE_NO_WARNINGS /DWIN32_LEAN_AND_MEAN",
+                        "/MD /O1 /DNDEBUG /D_CRT_SECURE_NO_WARNINGS /fp:precise",
                     );
                     cmake_config.define(
                         "CMAKE_CXX_FLAGS",
-                        "/MD /O2 /DNDEBUG /D_CRT_SECURE_NO_WARNINGS /DWIN32_LEAN_AND_MEAN",
+                        "/MD /O1 /DNDEBUG /D_CRT_SECURE_NO_WARNINGS /fp:precise",
                     );
                     cmake_config.define(
                         "CMAKE_C_FLAGS_RELEASE",
-                        "/MD /O2 /DNDEBUG /D_CRT_SECURE_NO_WARNINGS /DWIN32_LEAN_AND_MEAN",
+                        "/MD /O1 /DNDEBUG /D_CRT_SECURE_NO_WARNINGS /fp:precise",
                     );
                     cmake_config.define(
                         "CMAKE_CXX_FLAGS_RELEASE",
-                        "/MD /O2 /DNDEBUG /D_CRT_SECURE_NO_WARNINGS /DWIN32_LEAN_AND_MEAN",
+                        "/MD /O1 /DNDEBUG /D_CRT_SECURE_NO_WARNINGS /fp:precise",
                     );
 
-                    // Force debug configurations to use release settings
+                    // Use safe flags for debug configurations too
                     cmake_config.define(
                         "CMAKE_C_FLAGS_DEBUG",
-                        "/MD /O2 /DNDEBUG /D_CRT_SECURE_NO_WARNINGS /DWIN32_LEAN_AND_MEAN",
+                        "/MD /Od /D_CRT_SECURE_NO_WARNINGS /fp:precise",
                     );
                     cmake_config.define(
                         "CMAKE_CXX_FLAGS_DEBUG",
-                        "/MD /O2 /DNDEBUG /D_CRT_SECURE_NO_WARNINGS /DWIN32_LEAN_AND_MEAN",
+                        "/MD /Od /D_CRT_SECURE_NO_WARNINGS /fp:precise",
                     );
                 } else {
                     // Cross-compiling MSVC from non-Windows is not supported
