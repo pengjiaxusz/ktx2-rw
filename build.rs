@@ -229,36 +229,34 @@ fn configure_cmake_for_target(
                     // Configure MSVC runtime library to match Rust's dynamic CRT
                     cmake_config.define("CMAKE_MSVC_RUNTIME_LIBRARY", "MultiThreadedDLL");
 
-                    // Use most conservative MSVC settings to avoid any optimization issues
+                    // Use safe MSVC release settings to match Rust's runtime
+                    cmake_config.define("CMAKE_BUILD_TYPE", "Release");
                     cmake_config.define(
                         "CMAKE_C_FLAGS",
-                        "/MD /Od /D_CRT_SECURE_NO_WARNINGS /fp:strict /Zi",
+                        "/MD /O1 /DNDEBUG /D_CRT_SECURE_NO_WARNINGS /fp:strict",
                     );
                     cmake_config.define(
                         "CMAKE_CXX_FLAGS",
-                        "/MD /Od /D_CRT_SECURE_NO_WARNINGS /fp:strict /Zi",
+                        "/MD /O1 /DNDEBUG /D_CRT_SECURE_NO_WARNINGS /fp:strict",
                     );
                     cmake_config.define(
                         "CMAKE_C_FLAGS_RELEASE",
-                        "/MD /Od /D_CRT_SECURE_NO_WARNINGS /fp:strict /Zi",
+                        "/MD /O1 /DNDEBUG /D_CRT_SECURE_NO_WARNINGS /fp:strict",
                     );
                     cmake_config.define(
                         "CMAKE_CXX_FLAGS_RELEASE",
-                        "/MD /Od /D_CRT_SECURE_NO_WARNINGS /fp:strict /Zi",
+                        "/MD /O1 /DNDEBUG /D_CRT_SECURE_NO_WARNINGS /fp:strict",
                     );
 
-                    // Also force debug mode for all configurations
+                    // Use release settings for debug too to avoid heap mixing
                     cmake_config.define(
                         "CMAKE_C_FLAGS_DEBUG",
-                        "/MD /Od /D_CRT_SECURE_NO_WARNINGS /fp:strict /Zi",
+                        "/MD /O1 /DNDEBUG /D_CRT_SECURE_NO_WARNINGS /fp:strict",
                     );
                     cmake_config.define(
                         "CMAKE_CXX_FLAGS_DEBUG",
-                        "/MD /Od /D_CRT_SECURE_NO_WARNINGS /fp:strict /Zi",
+                        "/MD /O1 /DNDEBUG /D_CRT_SECURE_NO_WARNINGS /fp:strict",
                     );
-
-                    // Force debug build to get better error reporting
-                    cmake_config.define("CMAKE_BUILD_TYPE", "Debug");
                 } else {
                     // Cross-compiling MSVC from non-Windows is not supported
                     panic!("Cross-compiling to Windows MSVC targets from non-Windows platforms is not supported. Use GNU targets instead (e.g., x86_64-pc-windows-gnu)");
@@ -356,10 +354,8 @@ fn link_system_libraries(target_os: &str, target_env: &str) {
                 println!("cargo:rustc-link-lib=ssp");
                 println!("cargo:rustc-link-lib=mingw32");
             } else {
-                // MSVC environment
-                // Add debug CRT libraries to resolve debug symbols
-                println!("cargo:rustc-link-lib=msvcrtd");
-                println!("cargo:rustc-link-lib=msvcprtd");
+                // MSVC environment - use release CRT to match Rust and avoid heap corruption
+                // No additional libraries needed - MSVC automatically links the correct CRT
             }
         }
         "android" => {
