@@ -279,8 +279,9 @@ fn configure_cmake_for_target(
 
             // Handle musl vs glibc
             if target_env == "musl" {
-                cmake_config.define("CMAKE_C_FLAGS", "-static");
-                cmake_config.define("CMAKE_CXX_FLAGS", "-static");
+                // For musl, disable fortify source to avoid __*_chk function conflicts
+                cmake_config.define("CMAKE_C_FLAGS", "-D_FORTIFY_SOURCE=0 -U_FORTIFY_SOURCE");
+                cmake_config.define("CMAKE_CXX_FLAGS", "-D_FORTIFY_SOURCE=0 -U_FORTIFY_SOURCE");
 
                 // Set musl compilers explicitly
                 // The cmake crate tries to find x86_64-linux-musl-g++ but it doesn't exist
@@ -339,7 +340,13 @@ fn link_system_libraries(target_os: &str, target_env: &str) {
             println!("cargo:rustc-link-lib=c++");
         }
         "linux" => {
-            println!("cargo:rustc-link-lib=stdc++");
+            if target_env == "musl" {
+                // For musl, use minimal linking to avoid conflicts with static linking
+                println!("cargo:rustc-link-lib=static=stdc++");
+            } else {
+                // For glibc, use dynamic linking
+                println!("cargo:rustc-link-lib=stdc++");
+            }
             println!("cargo:rustc-link-lib=m");
             println!("cargo:rustc-link-lib=dl");
             println!("cargo:rustc-link-lib=pthread");
