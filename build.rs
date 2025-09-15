@@ -328,10 +328,8 @@ fn link_system_libraries(target_os: &str, target_env: &str) {
                 println!("cargo:rustc-link-lib=ssp");
                 println!("cargo:rustc-link-lib=mingw32");
             } else {
-                // MSVC environment
-                // The KTX library's Basis Universal code has debug assertions that call CrtDbgReport
-                // We need to provide the debug CRT library even in release builds
-                println!("cargo:rustc-link-lib=msvcrtd");
+                // MSVC environment - use clean linking like KTX-Software CI
+                // No additional system libraries needed - let MSVC handle CRT automatically
             }
         }
         "android" => {
