@@ -249,6 +249,12 @@ fn configure_cmake_for_target(
             if target_env == "musl" {
                 cmake_config.define("CMAKE_C_FLAGS", "-static");
                 cmake_config.define("CMAKE_CXX_FLAGS", "-static");
+
+                // Set musl compilers explicitly
+                // The cmake crate tries to find x86_64-linux-musl-g++ but it doesn't exist
+                // We need to use the standard gcc/g++ with musl
+                cmake_config.define("CMAKE_C_COMPILER", "gcc");
+                cmake_config.define("CMAKE_CXX_COMPILER", "g++");
             }
         }
         "android" => {
@@ -368,7 +374,7 @@ fn setup_bindgen(out_dir: &Path, target: &str, _ktx_build_dir: &Path) {
             let arch_triple = if target.contains("aarch64") {
                 "aarch64-linux-android"
             } else if target.contains("armv7") {
-                "armv7a-linux-androideabi"
+                "arm-linux-androideabi"
             } else if target.contains("arm") {
                 "arm-linux-androideabi"
             } else if target.contains("x86_64") {
@@ -379,9 +385,20 @@ fn setup_bindgen(out_dir: &Path, target: &str, _ktx_build_dir: &Path) {
                 target
             };
 
+            // Detect the host platform for the NDK prebuilt toolchain
+            let host_tag = if cfg!(target_os = "macos") {
+                "darwin-x86_64"
+            } else if cfg!(target_os = "linux") {
+                "linux-x86_64"
+            } else if cfg!(target_os = "windows") {
+                "windows-x86_64"
+            } else {
+                "linux-x86_64" // fallback
+            };
+
             let sysroot = format!(
-                "{}/toolchains/llvm/prebuilt/darwin-x86_64/sysroot",
-                ndk_path
+                "{}/toolchains/llvm/prebuilt/{}/sysroot",
+                ndk_path, host_tag
             );
 
             builder = builder
