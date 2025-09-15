@@ -231,6 +231,10 @@ fn configure_cmake_for_target(
 
                     // Add Basis Universal SSE support like their CI
                     cmake_config.define("BASISU_SUPPORT_SSE", "ON");
+
+                    // Use the same debug disabling flag that KTX-Software uses in their tests
+                    cmake_config.define("CMAKE_CXX_FLAGS", "/DBASISU_NO_ITERATOR_DEBUG_LEVEL");
+                    cmake_config.define("CMAKE_C_FLAGS", "/DBASISU_NO_ITERATOR_DEBUG_LEVEL");
                 } else {
                     // Cross-compiling MSVC from non-Windows is not supported
                     panic!("Cross-compiling to Windows MSVC targets from non-Windows platforms is not supported. Use GNU targets instead (e.g., x86_64-pc-windows-gnu)");
@@ -328,8 +332,10 @@ fn link_system_libraries(target_os: &str, target_env: &str) {
                 println!("cargo:rustc-link-lib=ssp");
                 println!("cargo:rustc-link-lib=mingw32");
             } else {
-                // MSVC environment - use clean linking like KTX-Software CI
-                // No additional system libraries needed - let MSVC handle CRT automatically
+                // MSVC environment
+                // BASISU_NO_ITERATOR_DEBUG_LEVEL only disables iterator debugging, not all debug assertions
+                // Still need debug CRT for other CrtDbgReport calls
+                println!("cargo:rustc-link-lib=msvcrtd");
             }
         }
         "android" => {
