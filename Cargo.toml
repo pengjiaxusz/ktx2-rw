@@ -1,7 +1,28 @@
 [package]
 name = "ktx2-rw"
-version = "0.1.0"
-edition = "2021"
+version = "0.2.0"
+edition = "2024"
+authors = ["Allen Dang <allengnr@gmail.com>"]
+description = "A high-level Rust wrapper for KTX2 texture format with full Basis Universal support"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/AllenDang/ktx2-rw"
+homepage = "https://github.com/AllenDang/ktx2-rw"
+documentation = "https://docs.rs/ktx2-rw"
+readme = "README.md"
+keywords = ["ktx2", "texture", "basis-universal", "graphics", "compression"]
+categories = ["graphics", "multimedia::images", "game-development"]
+exclude = [
+  ".github/",
+  "*.png",
+  "*.jpg",
+  "*.jpeg",
+  "*.ktx2",
+  "target/",
+  "tmp/",
+  "build/",
+  ".git/",
+  ".gitignore",
+]
 
 [dependencies]
 libc = "0.2"
@@ -10,7 +31,7 @@ libc = "0.2"
 bindgen = "0.72"
 cmake = "0.1"
 reqwest = { version = "0.12", features = ["blocking"] }
-zip = "2.1"
+zip = "5.1"
 tar = "0.4"
 flate2 = "1.0"
 
