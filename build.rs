@@ -80,6 +80,7 @@ fn build_ktx_software(
         .define("KTX_FEATURE_VK_UPLOAD", "OFF")
         .define("KTX_FEATURE_WRITE", "ON")
         .define("CMAKE_BUILD_TYPE", "Release")
+        .profile("Release")
         .out_dir(&ktx_build_dir);
 
     // Configure BASISU options following KTX-Software's approach
@@ -233,6 +234,8 @@ fn configure_cmake_for_target(
                     } else if target_arch == "aarch64" {
                         cmake_config.define("CMAKE_GENERATOR_PLATFORM", "ARM64");
                     }
+                    // Force Release configuration to avoid CRT mismatch
+                    cmake_config.define("CMAKE_CONFIGURATION_TYPES", "Release");
                     // Let KTX-Software handle all MSVC-specific configuration
                 } else {
                     // Cross-compiling MSVC from non-Windows is not supported
