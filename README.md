@@ -23,6 +23,21 @@ Add this to your `Cargo.toml`:
 ktx2-rw = { git = "https://github.com/AllenDang/ktx2-rw" }
 ```
 
+### Build Requirements
+
+The library builds KTX-Software from source, so you need:
+
+- **CMake** (3.15 or later)
+- **C/C++ compiler** (GCC, Clang, or MSVC)
+- **Internet connection** (for first build to download source)
+
+Platform-specific requirements:
+- **Windows**: Visual Studio 2022 or MinGW-w64
+- **macOS**: Xcode command line tools
+- **Linux**: build-essential package
+- **Android**: Android NDK (set `ANDROID_NDK_ROOT`)
+- **iOS**: Xcode
+
 ### Basic Usage
 
 ```rust
@@ -77,10 +92,28 @@ texture.compress_basis(&params)?;
 
 | Platform | Architecture | Status |
 | -------- | ------------ | ------ |
-| Windows  | x64          | ✅     |
+| Windows  | x64 (GNU)    | ✅     |
+| Windows  | x64 (MSVC)   | ✅     |
+| Windows  | ARM64        | ✅     |
 | macOS    | x64          | ✅     |
 | macOS    | ARM64        | ✅     |
 | Linux    | x64          | ✅     |
+| Linux    | x64 (musl)   | ✅     |
+| Linux    | ARM64        | ✅     |
+| Android  | All ABIs     | ✅     |
+| iOS      | All          | ✅     |
+
+The library now builds KTX-Software from source at compile time, providing excellent cross-compilation support.
+
+### Build System Benefits
+
+- ✅ **No pre-built binaries**: Reduced repository size by 85MB
+- ✅ **Universal cross-compilation**: Works on any target Rust supports
+- ✅ **Build optimization**: Compiled with your project's flags
+- ✅ **Security**: Build from verified source code
+- ✅ **Maintenance**: Automatic updates with KTX-Software releases
+
+The first build downloads and compiles KTX-Software (~5-10 minutes), but subsequent builds use cached results.
 
 ## Transcoding Formats
 
