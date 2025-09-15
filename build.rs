@@ -333,9 +333,8 @@ fn link_system_libraries(target_os: &str, target_env: &str) {
                 println!("cargo:rustc-link-lib=mingw32");
             } else {
                 // MSVC environment
-                // BASISU_NO_ITERATOR_DEBUG_LEVEL only disables iterator debugging, not all debug assertions
-                // Still need debug CRT for other CrtDbgReport calls
-                println!("cargo:rustc-link-lib=msvcrtd");
+                // Use release CRT to avoid mixing debug/release heaps
+                println!("cargo:rustc-link-lib=msvcrt");
             }
         }
         "android" => {
