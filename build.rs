@@ -69,7 +69,7 @@ fn build_ktx_software(
     // Configure CMake
     let mut cmake_config = cmake::Config::new(&ktx_source_dir);
 
-    // Basic configuration
+    // Basic configuration - match KTX-Software's official build approach
     cmake_config
         .define("KTX_FEATURE_STATIC_LIBRARY", "ON")
         .define("BUILD_SHARED_LIBS", "OFF")
@@ -81,6 +81,14 @@ fn build_ktx_software(
         .define("KTX_FEATURE_WRITE", "ON")
         .define("CMAKE_BUILD_TYPE", "Release")
         .out_dir(&ktx_build_dir);
+
+    // Configure BASISU options following KTX-Software's approach
+    if target_arch == "x86_64" {
+        cmake_config.define("BASISU_SUPPORT_SSE", "ON");
+    } else {
+        cmake_config.define("BASISU_SUPPORT_SSE", "OFF");
+    }
+    cmake_config.define("BASISU_SUPPORT_OPENCL", "OFF");
 
     // Platform-specific configuration
     configure_cmake_for_target(
@@ -225,16 +233,7 @@ fn configure_cmake_for_target(
                     } else if target_arch == "aarch64" {
                         cmake_config.define("CMAKE_GENERATOR_PLATFORM", "ARM64");
                     }
-
-                    // Use KTX-Software's official MSVC configuration approach
-                    // Mimic their Windows CI build exactly
-
-                    // Add Basis Universal SSE support like their CI
-                    cmake_config.define("BASISU_SUPPORT_SSE", "ON");
-
-                    // Use the same debug disabling flag that KTX-Software uses in their tests
-                    cmake_config.define("CMAKE_CXX_FLAGS", "/DBASISU_NO_ITERATOR_DEBUG_LEVEL");
-                    cmake_config.define("CMAKE_C_FLAGS", "/DBASISU_NO_ITERATOR_DEBUG_LEVEL");
+                    // Let KTX-Software handle all MSVC-specific configuration
                 } else {
                     // Cross-compiling MSVC from non-Windows is not supported
                     panic!("Cross-compiling to Windows MSVC targets from non-Windows platforms is not supported. Use GNU targets instead (e.g., x86_64-pc-windows-gnu)");
@@ -331,11 +330,8 @@ fn link_system_libraries(target_os: &str, target_env: &str) {
                 println!("cargo:rustc-link-lib=pthread");
                 println!("cargo:rustc-link-lib=ssp");
                 println!("cargo:rustc-link-lib=mingw32");
-            } else {
-                // MSVC environment
-                // Use release CRT to avoid mixing debug/release heaps
-                println!("cargo:rustc-link-lib=msvcrt");
             }
+            // For MSVC, let the CMake build system handle all library linking
         }
         "android" => {
             println!("cargo:rustc-link-lib=c++");
