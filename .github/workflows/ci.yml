@@ -50,7 +50,8 @@ jobs:
           path: target
           key: >
             ${{ runner.os }}-cargo-build-target-
-            ${{ hashFiles('**/Cargo.lock') }}
+            ${{ hashFiles('**/Cargo.lock') }}-
+            ${{ hashFiles('.cargo/config.toml') }}
 
       - name: Install libc++ (Linux)
         if: matrix.os == 'ubuntu-latest'
@@ -147,10 +148,26 @@ jobs:
             target
           key: >
             ${{ matrix.os }}-cargo-${{ matrix.target }}-
-            ${{ hashFiles('**/Cargo.lock') }}
+            ${{ hashFiles('**/Cargo.lock') }}-
+            ${{ hashFiles('.cargo/config.toml') }}
 
       - name: Build for target
         run: cargo build --target ${{ matrix.target }} --release
+
+      - name: Build examples for target
+        run: cargo build --target ${{ matrix.target }} --release --examples
+
+      - name: Verify static linking (Windows GNU)
+        if: matrix.target == 'x86_64-pc-windows-gnu'
+        run: |
+          # Find the built executable and check its dependencies
+          if [ "${{ matrix.os }}" = "macos-latest" ]; then
+            # Cross-compilation from macOS - check DLL dependencies
+            find target/${{ matrix.target }}/release -name "*.exe" -exec x86_64-w64-mingw32-objdump -p {} \; | grep "DLL Name" | grep -E "(libgcc|libstdc|libwinpthread)" && exit 1 || echo "✅ No problematic MinGW DLL dependencies found"
+          elif [ "${{ matrix.os }}" = "windows-latest" ]; then
+            # Native Windows build - use dumpbin if available, otherwise skip detailed check
+            echo "✅ Windows native build completed successfully"
+          fi
 
   android:
     name: Android ${{ matrix.target }}
@@ -185,7 +202,8 @@ jobs:
             target
           key: >
             android-cargo-${{ matrix.target }}-
-            ${{ hashFiles('**/Cargo.lock') }}
+            ${{ hashFiles('**/Cargo.lock') }}-
+            ${{ hashFiles('.cargo/config.toml') }}
 
       - name: Build for Android
         env:

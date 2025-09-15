@@ -129,7 +129,10 @@ fn build_ktx_software(
 
     // Handle different library types - only warn for dynamic libraries
     if matches!(lib_type.as_str(), "dylib") {
-        println!("cargo:warning=Built dynamic library {}, you may need to set LD_LIBRARY_PATH or DYLD_LIBRARY_PATH", lib_name);
+        println!(
+            "cargo:warning=Built dynamic library {}, you may need to set LD_LIBRARY_PATH or DYLD_LIBRARY_PATH",
+            lib_name
+        );
     }
 }
 
@@ -219,6 +222,21 @@ fn configure_cmake_for_target(
                     cmake_config.define("CMAKE_SYSTEM_PROCESSOR", "i686");
                 }
 
+                // Configure for fully static linking with MinGW
+                cmake_config.define("CMAKE_C_FLAGS", "-static -static-libgcc -static-libstdc++");
+                cmake_config.define(
+                    "CMAKE_CXX_FLAGS",
+                    "-static -static-libgcc -static-libstdc++",
+                );
+                cmake_config.define(
+                    "CMAKE_EXE_LINKER_FLAGS",
+                    "-static -static-libgcc -static-libstdc++",
+                );
+                cmake_config.define(
+                    "CMAKE_SHARED_LINKER_FLAGS",
+                    "-static -static-libgcc -static-libstdc++",
+                );
+
                 // When cross-compiling from non-Windows, use Unix Makefiles instead of MinGW Makefiles
                 if !cfg!(windows) {
                     cmake_config.generator("Unix Makefiles");
@@ -239,7 +257,9 @@ fn configure_cmake_for_target(
                     // Let KTX-Software handle all MSVC-specific configuration
                 } else {
                     // Cross-compiling MSVC from non-Windows is not supported
-                    panic!("Cross-compiling to Windows MSVC targets from non-Windows platforms is not supported. Use GNU targets instead (e.g., x86_64-pc-windows-gnu)");
+                    panic!(
+                        "Cross-compiling to Windows MSVC targets from non-Windows platforms is not supported. Use GNU targets instead (e.g., x86_64-pc-windows-gnu)"
+                    );
                 }
             }
         }
@@ -326,13 +346,18 @@ fn link_system_libraries(target_os: &str, target_env: &str) {
         }
         "windows" => {
             if target_env == "gnu" {
-                // MinGW/GNU environment
-                println!("cargo:rustc-link-lib=stdc++");
-                println!("cargo:rustc-link-lib=gcc_s");
-                println!("cargo:rustc-link-lib=gcc");
-                println!("cargo:rustc-link-lib=pthread");
-                println!("cargo:rustc-link-lib=ssp");
-                println!("cargo:rustc-link-lib=mingw32");
+                // MinGW/GNU environment - aggressive static linking configured in .cargo/config.toml
+                // Only link additional system libraries not covered by rustflags
+                println!("cargo:rustc-link-lib=winspool");
+                println!("cargo:rustc-link-lib=comdlg32");
+                println!("cargo:rustc-link-lib=shell32");
+                println!("cargo:rustc-link-lib=ole32");
+                println!("cargo:rustc-link-lib=oleaut32");
+                println!("cargo:rustc-link-lib=uuid");
+                println!("cargo:rustc-link-lib=odbc32");
+                println!("cargo:rustc-link-lib=odbccp32");
+                println!("cargo:rustc-link-lib=ws2_32");
+                println!("cargo:rustc-link-lib=userenv");
             }
             // For MSVC, let the CMake build system handle all library linking
         }

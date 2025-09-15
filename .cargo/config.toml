@@ -1,0 +1,19 @@
+[target.x86_64-pc-windows-gnu]
+rustflags = [
+    "-C", "target-feature=+crt-static",
+    "-C", "link-arg=-static",
+    "-C", "link-arg=-static-libgcc",
+    "-C", "link-arg=-static-libstdc++",
+    "-C", "link-arg=-Wl,-Bstatic",
+    "-C", "link-arg=-lstdc++",
+    "-C", "link-arg=-lgcc_eh",
+    "-C", "link-arg=-lwinpthread",
+    "-C", "link-arg=-lmingw32",
+    "-C", "link-arg=-lmingwex",
+    "-C", "link-arg=-lmsvcrt",
+    "-C", "link-arg=-Wl,-Bdynamic",
+    "-C", "link-arg=-lkernel32",
+    "-C", "link-arg=-luser32",
+    "-C", "link-arg=-lgdi32",
+    "-C", "link-arg=-ladvapi32",
+]
