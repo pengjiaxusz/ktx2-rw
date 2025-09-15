@@ -279,13 +279,12 @@ fn configure_cmake_for_target(
 
             // Handle musl vs glibc
             if target_env == "musl" {
-                // For musl, disable fortify source to avoid __*_chk function conflicts
-                cmake_config.define("CMAKE_C_FLAGS", "-D_FORTIFY_SOURCE=0 -U_FORTIFY_SOURCE");
-                cmake_config.define("CMAKE_CXX_FLAGS", "-D_FORTIFY_SOURCE=0 -U_FORTIFY_SOURCE");
+                // For musl, disable fortify source and use minimal flags
+                cmake_config.define("CMAKE_C_FLAGS", "-D_FORTIFY_SOURCE=0 -U_FORTIFY_SOURCE -static");
+                cmake_config.define("CMAKE_CXX_FLAGS", "-D_FORTIFY_SOURCE=0 -U_FORTIFY_SOURCE -static");
+                cmake_config.define("CMAKE_EXE_LINKER_FLAGS", "-static");
 
-                // Set musl compilers explicitly
-                // The cmake crate tries to find x86_64-linux-musl-g++ but it doesn't exist
-                // We need to use the standard gcc/g++ with musl
+                // Set musl compilers explicitly - use standard system compilers
                 cmake_config.define("CMAKE_C_COMPILER", "gcc");
                 cmake_config.define("CMAKE_CXX_COMPILER", "g++");
             }
@@ -341,8 +340,8 @@ fn link_system_libraries(target_os: &str, target_env: &str) {
         }
         "linux" => {
             if target_env == "musl" {
-                // For musl, use minimal linking to avoid conflicts with static linking
-                println!("cargo:rustc-link-lib=static=stdc++");
+                // For musl, don't explicitly link C++ stdlib - let Rust handle it
+                // The static nature of musl builds will pull in required symbols
             } else {
                 // For glibc, use dynamic linking
                 println!("cargo:rustc-link-lib=stdc++");
