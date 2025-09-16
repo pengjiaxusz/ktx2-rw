@@ -205,39 +205,10 @@ jobs:
   musl:
     name: Test on x86_64-unknown-linux-musl
     runs-on: ubuntu-latest
-    container: alpine:3.19
+    container: messense/rust-musl-cross:x86_64-musl
 
     steps:
-      - name: Install dependencies
-        run: |
-          apk add --no-cache \
-            git \
-            curl \
-            bash \
-            build-base \
-            musl-dev \
-            cmake \
-            pkgconfig \
-            openssl-dev \
-            openssl-libs-static \
-            llvm17-dev \
-            clang17 \
-            clang17-libs \
-            ca-certificates
-
       - uses: actions/checkout@v4
-
-      - name: Debug libclang location
-        run: |
-          find /usr -name "*libclang*" -type f 2>/dev/null || echo "No libclang files found"
-          ls -la /usr/lib/ | grep -i clang || echo "No clang libs in /usr/lib"
-          ls -la /usr/lib/llvm17/ 2>/dev/null || echo "No /usr/lib/llvm17"
-
-      - name: Install Rust
-        run: |
-          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-          source ~/.cargo/env
-          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
 
       - name: Cache cargo
         uses: actions/cache@v4
@@ -251,22 +222,10 @@ jobs:
             ${{ hashFiles('.cargo/config.toml') }}
 
       - name: Build
-        env:
-          LIBCLANG_PATH: /usr/lib
-        run: |
-          source ~/.cargo/env
-          cargo build --target x86_64-unknown-linux-musl --release
+        run: cargo build --target x86_64-unknown-linux-musl --release
 
       - name: Run tests
-        env:
-          LIBCLANG_PATH: /usr/lib
-        run: |
-          source ~/.cargo/env
-          cargo test --target x86_64-unknown-linux-musl --release
+        run: cargo test --target x86_64-unknown-linux-musl --release
 
       - name: Build examples
-        env:
-          LIBCLANG_PATH: /usr/lib
-        run: |
-          source ~/.cargo/env
-          cargo build --target x86_64-unknown-linux-musl --release --examples
+        run: cargo build --target x86_64-unknown-linux-musl --release --examples
