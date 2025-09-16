@@ -282,11 +282,11 @@ fn configure_cmake_for_target(
                 // Use -U to undefine _FORTIFY_SOURCE first, then redefine to avoid redefinition errors
                 cmake_config.define(
                     "CMAKE_C_FLAGS",
-                    "-U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=0 -static-libgcc",
+                    "-U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=0 -static-libgcc -fPIE",
                 );
                 cmake_config.define(
                     "CMAKE_CXX_FLAGS",
-                    "-U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=0 -static-libgcc -static-libstdc++",
+                    "-U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=0 -static-libgcc -static-libstdc++ -fPIE",
                 );
                 cmake_config.define("CMAKE_EXE_LINKER_FLAGS", "-static-libgcc -static-libstdc++");
                 cmake_config.define(
