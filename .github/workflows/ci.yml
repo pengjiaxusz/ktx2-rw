@@ -213,6 +213,7 @@ jobs:
           apk add --no-cache \
             git \
             curl \
+            bash \
             build-base \
             musl-dev \
             cmake \
