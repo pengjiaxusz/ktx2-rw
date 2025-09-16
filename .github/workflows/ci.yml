@@ -227,6 +227,12 @@ jobs:
 
       - uses: actions/checkout@v4
 
+      - name: Debug libclang location
+        run: |
+          find /usr -name "*libclang*" -type f 2>/dev/null || echo "No libclang files found"
+          ls -la /usr/lib/ | grep -i clang || echo "No clang libs in /usr/lib"
+          ls -la /usr/lib/llvm17/ 2>/dev/null || echo "No /usr/lib/llvm17"
+
       - name: Install Rust
         run: |
           curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
