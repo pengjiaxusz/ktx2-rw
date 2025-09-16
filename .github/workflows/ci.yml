@@ -220,6 +220,8 @@ jobs:
             pkgconfig \
             openssl-dev \
             openssl-libs-static \
+            clang-dev \
+            llvm-dev \
             ca-certificates
 
       - uses: actions/checkout@v4
