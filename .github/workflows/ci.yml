@@ -208,10 +208,10 @@ jobs:
     container: messense/rust-musl-cross:x86_64-musl
 
     steps:
-      - name: Install libclang
+      - name: Install dependencies
         run: |
           apt-get update
-          apt-get install -y libclang-dev
+          apt-get install -y libclang-dev pkg-config libssl-dev
 
       - uses: actions/checkout@v4
 
