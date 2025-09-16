@@ -71,7 +71,7 @@ fn build_ktx_software(
 
     // Basic configuration - match KTX-Software's official build approach
     cmake_config
-        .define("BUILD_SHARED_LIBS", "OFF")  // This automatically sets KHRONOS_STATIC
+        .define("BUILD_SHARED_LIBS", "OFF") // This automatically sets KHRONOS_STATIC
         .define("KTX_FEATURE_TOOLS", "OFF")
         .define("KTX_FEATURE_TESTS", "OFF")
         .define("KTX_FEATURE_LOADTEST_APPS", "OFF")
