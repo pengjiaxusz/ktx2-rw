@@ -280,14 +280,8 @@ fn configure_cmake_for_target(
             // Handle musl vs glibc
             if target_env == "musl" {
                 // For musl, disable fortify source and use minimal flags
-                cmake_config.define(
-                    "CMAKE_C_FLAGS",
-                    "-D_FORTIFY_SOURCE=0 -U_FORTIFY_SOURCE",
-                );
-                cmake_config.define(
-                    "CMAKE_CXX_FLAGS",
-                    "-D_FORTIFY_SOURCE=0 -U_FORTIFY_SOURCE",
-                );
+                cmake_config.define("CMAKE_C_FLAGS", "-D_FORTIFY_SOURCE=0 -U_FORTIFY_SOURCE");
+                cmake_config.define("CMAKE_CXX_FLAGS", "-D_FORTIFY_SOURCE=0 -U_FORTIFY_SOURCE");
 
                 // Only apply static linking to final executables/shared libraries, not static libraries
                 cmake_config.define(
