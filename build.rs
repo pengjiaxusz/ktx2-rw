@@ -288,18 +288,29 @@ fn configure_cmake_for_target(
                     "CMAKE_CXX_FLAGS",
                     "-D_FORTIFY_SOURCE=0 -U_FORTIFY_SOURCE -static -static-libgcc -static-libstdc++",
                 );
-                cmake_config.define("CMAKE_EXE_LINKER_FLAGS", "-static -static-libgcc -static-libstdc++");
+                cmake_config.define(
+                    "CMAKE_EXE_LINKER_FLAGS",
+                    "-static -static-libgcc -static-libstdc++",
+                );
 
                 // Set musl compilers explicitly - try musl-specific first, fallback to system
                 if target.contains("x86_64") {
                     // Try musl-specific compiler first
-                    if std::process::Command::new("x86_64-linux-musl-gcc").arg("--version").output().is_ok() {
+                    if std::process::Command::new("x86_64-linux-musl-gcc")
+                        .arg("--version")
+                        .output()
+                        .is_ok()
+                    {
                         cmake_config.define("CMAKE_C_COMPILER", "x86_64-linux-musl-gcc");
                     } else {
                         cmake_config.define("CMAKE_C_COMPILER", "gcc");
                     }
 
-                    if std::process::Command::new("x86_64-linux-musl-g++").arg("--version").output().is_ok() {
+                    if std::process::Command::new("x86_64-linux-musl-g++")
+                        .arg("--version")
+                        .output()
+                        .is_ok()
+                    {
                         cmake_config.define("CMAKE_CXX_COMPILER", "x86_64-linux-musl-g++");
                     } else {
                         cmake_config.define("CMAKE_CXX_COMPILER", "g++");
