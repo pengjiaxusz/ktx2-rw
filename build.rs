@@ -348,6 +348,13 @@ fn link_system_libraries(target_os: &str, target_env: &str) {
             if target_env == "musl" {
                 // For musl targets, we need to link C++ runtime statically
                 // The KTX-Software library contains C++ code that requires these symbols
+                // Add search paths for musl toolchain libraries
+                println!(
+                    "cargo:rustc-link-search=native=/usr/local/musl/x86_64-unknown-linux-musl/lib"
+                );
+                println!(
+                    "cargo:rustc-link-search=native=/usr/local/musl/lib/gcc/x86_64-unknown-linux-musl/11.2.0"
+                );
                 println!("cargo:rustc-link-lib=static=stdc++");
                 println!("cargo:rustc-link-lib=static=gcc_eh");
             } else {
