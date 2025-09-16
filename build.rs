@@ -400,14 +400,14 @@ fn link_system_libraries(target_os: &str, target_env: &str, target: &str) {
 
                                     let gcc_path =
                                         toolchain_path.join("lib").join("gcc").join(&triple);
-                                    if gcc_path.exists() {
-                                        if let Ok(gcc_entries) = std::fs::read_dir(&gcc_path) {
-                                            for gcc_entry in gcc_entries.flatten() {
-                                                println!(
-                                                    "cargo:rustc-link-search=native={}",
-                                                    gcc_entry.path().display()
-                                                );
-                                            }
+                                    if gcc_path.exists()
+                                        && let Ok(gcc_entries) = std::fs::read_dir(&gcc_path)
+                                    {
+                                        for gcc_entry in gcc_entries.flatten() {
+                                            println!(
+                                                "cargo:rustc-link-search=native={}",
+                                                gcc_entry.path().display()
+                                            );
                                         }
                                     }
                                     break; // Use the first available version

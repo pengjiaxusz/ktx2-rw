@@ -106,7 +106,7 @@ impl From<ktx_error_code_e> for Error {
             _ => Error::Other({
                 #[cfg(windows)]
                 {
-                    code as u32
+                    code
                 }
                 #[cfg(not(windows))]
                 {
