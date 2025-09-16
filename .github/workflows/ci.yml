@@ -244,16 +244,22 @@ jobs:
             ${{ hashFiles('.cargo/config.toml') }}
 
       - name: Build
+        env:
+          LIBCLANG_PATH: /usr/lib
         run: |
           source ~/.cargo/env
           cargo build --target x86_64-unknown-linux-musl --release
 
       - name: Run tests
+        env:
+          LIBCLANG_PATH: /usr/lib
         run: |
           source ~/.cargo/env
           cargo test --target x86_64-unknown-linux-musl --release
 
       - name: Build examples
+        env:
+          LIBCLANG_PATH: /usr/lib
         run: |
           source ~/.cargo/env
           cargo build --target x86_64-unknown-linux-musl --release --examples
