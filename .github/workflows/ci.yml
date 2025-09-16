@@ -117,7 +117,12 @@ jobs:
         if: matrix.target == 'x86_64-unknown-linux-musl'
         run: |
           sudo apt-get update
-          sudo apt-get install -y musl-tools
+          sudo apt-get install -y musl-tools musl-dev
+          # Install musl-specific GCC and G++ compilers
+          sudo apt-get install -y gcc-x86-64-linux-gnu g++-x86-64-linux-gnu
+          # Create symlinks for musl-specific compilers if they don't exist
+          sudo ln -sf /usr/bin/x86_64-linux-gnu-gcc /usr/local/bin/x86_64-linux-musl-gcc || true
+          sudo ln -sf /usr/bin/x86_64-linux-gnu-g++ /usr/local/bin/x86_64-linux-musl-g++ || true
 
       - name: Install libc++ (Linux)
         if: matrix.os == 'ubuntu-latest'

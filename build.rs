@@ -286,13 +286,29 @@ fn configure_cmake_for_target(
                 );
                 cmake_config.define(
                     "CMAKE_CXX_FLAGS",
-                    "-D_FORTIFY_SOURCE=0 -U_FORTIFY_SOURCE -static",
+                    "-D_FORTIFY_SOURCE=0 -U_FORTIFY_SOURCE -static -static-libgcc -static-libstdc++",
                 );
-                cmake_config.define("CMAKE_EXE_LINKER_FLAGS", "-static");
+                cmake_config.define("CMAKE_EXE_LINKER_FLAGS", "-static -static-libgcc -static-libstdc++");
 
-                // Set musl compilers explicitly - use standard system compilers
-                cmake_config.define("CMAKE_C_COMPILER", "gcc");
-                cmake_config.define("CMAKE_CXX_COMPILER", "g++");
+                // Set musl compilers explicitly - try musl-specific first, fallback to system
+                if target.contains("x86_64") {
+                    // Try musl-specific compiler first
+                    if std::process::Command::new("x86_64-linux-musl-gcc").arg("--version").output().is_ok() {
+                        cmake_config.define("CMAKE_C_COMPILER", "x86_64-linux-musl-gcc");
+                    } else {
+                        cmake_config.define("CMAKE_C_COMPILER", "gcc");
+                    }
+
+                    if std::process::Command::new("x86_64-linux-musl-g++").arg("--version").output().is_ok() {
+                        cmake_config.define("CMAKE_CXX_COMPILER", "x86_64-linux-musl-g++");
+                    } else {
+                        cmake_config.define("CMAKE_CXX_COMPILER", "g++");
+                    }
+                } else {
+                    // Fallback for other architectures
+                    cmake_config.define("CMAKE_C_COMPILER", "gcc");
+                    cmake_config.define("CMAKE_CXX_COMPILER", "g++");
+                }
             }
         }
         "android" => {
@@ -346,8 +362,11 @@ fn link_system_libraries(target_os: &str, target_env: &str) {
         }
         "linux" => {
             if target_env == "musl" {
-                // For musl, don't explicitly link C++ stdlib - let Rust handle it
-                // The static nature of musl builds will pull in required symbols
+                // For musl targets, we need to explicitly link C++ standard library statically
+                // This is necessary because the Basis Universal code is C++ and needs exception handling
+                println!("cargo:rustc-link-lib=static=stdc++");
+                println!("cargo:rustc-link-lib=static=gcc_eh");
+                println!("cargo:rustc-link-lib=static=gcc");
             } else {
                 // For glibc, use dynamic linking
                 println!("cargo:rustc-link-lib=stdc++");
