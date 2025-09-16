@@ -211,7 +211,10 @@ jobs:
       - name: Install dependencies
         run: |
           apt-get update
-          apt-get install -y libclang-dev pkg-config libssl-dev libstdc++-12-dev gcc-multilib
+          apt-get install -y libclang-dev pkg-config libssl-dev musl-dev musl-tools
+          # Check what C++ libraries are available in the musl toolchain
+          find /usr -name "*stdc++*" -type f 2>/dev/null || echo "No stdc++ libraries found"
+          find /usr -name "*gcc*" -type f 2>/dev/null | grep -E "\.(a|so)$" | head -10
 
       - uses: actions/checkout@v4
 
