@@ -278,10 +278,17 @@ fn configure_cmake_for_target(
 
             // Handle musl vs glibc
             if target_env == "musl" {
-                // For musl, just disable fortify source to avoid warnings
-                // Let KTX-Software's CMake configuration handle everything else
-                cmake_config.define("CMAKE_C_FLAGS", "-D_FORTIFY_SOURCE=0");
-                cmake_config.define("CMAKE_CXX_FLAGS", "-D_FORTIFY_SOURCE=0");
+                // For musl, configure for static linking of C++ runtime
+                cmake_config.define("CMAKE_C_FLAGS", "-D_FORTIFY_SOURCE=0 -static-libgcc");
+                cmake_config.define(
+                    "CMAKE_CXX_FLAGS",
+                    "-D_FORTIFY_SOURCE=0 -static-libgcc -static-libstdc++",
+                );
+                cmake_config.define("CMAKE_EXE_LINKER_FLAGS", "-static-libgcc -static-libstdc++");
+                cmake_config.define(
+                    "CMAKE_SHARED_LINKER_FLAGS",
+                    "-static-libgcc -static-libstdc++",
+                );
             }
         }
         "android" => {
@@ -335,9 +342,10 @@ fn link_system_libraries(target_os: &str, target_env: &str) {
         }
         "linux" => {
             if target_env == "musl" {
-                // For musl targets, don't link C++ libraries explicitly
-                // Let the musl toolchain and static linking flags in cargo config handle everything
-                // The CMake build will embed C++ dependencies into the static library
+                // For musl targets, we need to link C++ runtime statically
+                // The KTX-Software library contains C++ code that requires these symbols
+                println!("cargo:rustc-link-lib=static=stdc++");
+                println!("cargo:rustc-link-lib=static=gcc_eh");
             } else {
                 // For glibc, use dynamic linking
                 println!("cargo:rustc-link-lib=stdc++");
