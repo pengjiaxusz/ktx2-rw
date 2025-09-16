@@ -292,34 +292,13 @@ fn configure_cmake_for_target(
                     "CMAKE_EXE_LINKER_FLAGS",
                     "-static -static-libgcc -static-libstdc++",
                 );
+                // Ensure static libraries are built and linked properly
+                cmake_config.define("CMAKE_STATIC_LINKER_FLAGS", "-static -static-libgcc -static-libstdc++");
 
-                // Set musl compilers explicitly - try musl-specific first, fallback to system
-                if target.contains("x86_64") {
-                    // Try musl-specific compiler first
-                    if std::process::Command::new("x86_64-linux-musl-gcc")
-                        .arg("--version")
-                        .output()
-                        .is_ok()
-                    {
-                        cmake_config.define("CMAKE_C_COMPILER", "x86_64-linux-musl-gcc");
-                    } else {
-                        cmake_config.define("CMAKE_C_COMPILER", "gcc");
-                    }
-
-                    if std::process::Command::new("x86_64-linux-musl-g++")
-                        .arg("--version")
-                        .output()
-                        .is_ok()
-                    {
-                        cmake_config.define("CMAKE_CXX_COMPILER", "x86_64-linux-musl-g++");
-                    } else {
-                        cmake_config.define("CMAKE_CXX_COMPILER", "g++");
-                    }
-                } else {
-                    // Fallback for other architectures
-                    cmake_config.define("CMAKE_C_COMPILER", "gcc");
-                    cmake_config.define("CMAKE_CXX_COMPILER", "g++");
-                }
+                // Use standard system compilers for musl builds
+                // The static linking is handled by the flags above
+                cmake_config.define("CMAKE_C_COMPILER", "gcc");
+                cmake_config.define("CMAKE_CXX_COMPILER", "g++");
             }
         }
         "android" => {
@@ -373,11 +352,11 @@ fn link_system_libraries(target_os: &str, target_env: &str) {
         }
         "linux" => {
             if target_env == "musl" {
-                // For musl targets, we need to explicitly link C++ standard library statically
-                // This is necessary because the Basis Universal code is C++ and needs exception handling
-                println!("cargo:rustc-link-lib=static=stdc++");
-                println!("cargo:rustc-link-lib=static=gcc_eh");
-                println!("cargo:rustc-link-lib=static=gcc");
+                // For musl targets, let the CMake build handle C++ library linking
+                // The static flags in CMAKE_CXX_FLAGS and CMAKE_EXE_LINKER_FLAGS will
+                // ensure the KTX library is built with static C++ dependencies
+                // We don't need to explicitly link C++ libraries here since they're
+                // already embedded in the static libktx.a
             } else {
                 // For glibc, use dynamic linking
                 println!("cargo:rustc-link-lib=stdc++");
