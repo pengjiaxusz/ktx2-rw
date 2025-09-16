@@ -41,7 +41,7 @@ fn main() {
     }
 
     // Link required system libraries
-    link_system_libraries(&target_os, &target_env);
+    link_system_libraries(&target_os, &target_env, &target);
 
     // Configure bindgen
     setup_bindgen(&out_dir, &target, &ktx_build_dir);
@@ -339,7 +339,7 @@ fn get_lib_name(target_os: &str) -> &'static str {
     }
 }
 
-fn link_system_libraries(target_os: &str, target_env: &str) {
+fn link_system_libraries(target_os: &str, target_env: &str, target: &str) {
     match target_os {
         "macos" => {
             println!("cargo:rustc-link-lib=c++");
@@ -367,18 +367,69 @@ fn link_system_libraries(target_os: &str, target_env: &str) {
         }
         "windows" => {
             if target_env == "gnu" {
-                // MinGW/GNU environment - aggressive static linking configured in .cargo/config.toml
-                // Only link additional system libraries not covered by rustflags
-                println!("cargo:rustc-link-lib=winspool");
-                println!("cargo:rustc-link-lib=comdlg32");
-                println!("cargo:rustc-link-lib=shell32");
-                println!("cargo:rustc-link-lib=ole32");
-                println!("cargo:rustc-link-lib=oleaut32");
-                println!("cargo:rustc-link-lib=uuid");
-                println!("cargo:rustc-link-lib=odbc32");
-                println!("cargo:rustc-link-lib=odbccp32");
+                // MinGW/GNU environment - ensure C++ standard library is statically linked
+                // This is critical when used as a dependency to provide C++ symbols
+                // that are required by the embedded Basis Universal C++ code
+
+                // Add search paths for MinGW libraries on different platforms
+                if !cfg!(windows) {
+                    // Cross-compiling from non-Windows (likely macOS/Linux)
+                    if cfg!(target_os = "macos") {
+                        // macOS with Homebrew mingw-w64
+                        let arch = if target.contains("x86_64") {
+                            "x86_64"
+                        } else {
+                            "i686"
+                        };
+                        let triple = format!("{}-w64-mingw32", arch);
+
+                        // Try to find the toolchain dynamically
+                        if let Ok(entries) = std::fs::read_dir("/opt/homebrew/Cellar/mingw-w64") {
+                            for entry in entries.flatten() {
+                                let version_path = entry.path();
+                                let toolchain_path =
+                                    version_path.join(format!("toolchain-{}", arch));
+                                if toolchain_path.exists() {
+                                    let lib_path = toolchain_path.join(&triple).join("lib");
+                                    if lib_path.exists() {
+                                        println!(
+                                            "cargo:rustc-link-search=native={}",
+                                            lib_path.display()
+                                        );
+                                    }
+
+                                    let gcc_path =
+                                        toolchain_path.join("lib").join("gcc").join(&triple);
+                                    if gcc_path.exists() {
+                                        if let Ok(gcc_entries) = std::fs::read_dir(&gcc_path) {
+                                            for gcc_entry in gcc_entries.flatten() {
+                                                println!(
+                                                    "cargo:rustc-link-search=native={}",
+                                                    gcc_entry.path().display()
+                                                );
+                                            }
+                                        }
+                                    }
+                                    break; // Use the first available version
+                                }
+                            }
+                        }
+                    }
+                }
+
+                println!("cargo:rustc-link-lib=static=stdc++");
+                println!("cargo:rustc-link-lib=static=gcc_eh");
+                println!("cargo:rustc-link-lib=static=winpthread");
+
+                // Required for C++ exception handling
+                println!("cargo:rustc-link-lib=static=gcc");
+
+                // Additional system libraries needed by KTX-Software
+                println!("cargo:rustc-link-lib=kernel32");
+                println!("cargo:rustc-link-lib=user32");
+                println!("cargo:rustc-link-lib=gdi32");
+                println!("cargo:rustc-link-lib=advapi32");
                 println!("cargo:rustc-link-lib=ws2_32");
-                println!("cargo:rustc-link-lib=userenv");
             }
             // For MSVC, let the CMake build system handle all library linking
         }
