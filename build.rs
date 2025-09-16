@@ -280,7 +280,10 @@ fn configure_cmake_for_target(
             if target_env == "musl" {
                 // For musl, configure for static linking of C++ runtime
                 // Use -U to undefine _FORTIFY_SOURCE first, then redefine to avoid redefinition errors
-                cmake_config.define("CMAKE_C_FLAGS", "-U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=0 -static-libgcc");
+                cmake_config.define(
+                    "CMAKE_C_FLAGS",
+                    "-U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=0 -static-libgcc",
+                );
                 cmake_config.define(
                     "CMAKE_CXX_FLAGS",
                     "-U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=0 -static-libgcc -static-libstdc++",
