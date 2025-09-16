@@ -248,6 +248,11 @@ jobs:
           source ~/.cargo/env
           cargo build --target x86_64-unknown-linux-musl --release
 
+      - name: Run tests
+        run: |
+          source ~/.cargo/env
+          cargo test --target x86_64-unknown-linux-musl --release
+
       - name: Build examples
         run: |
           source ~/.cargo/env
