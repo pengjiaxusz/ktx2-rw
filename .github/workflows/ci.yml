@@ -149,18 +149,17 @@ jobs:
       - name: Build examples for target
         run: cargo build --target ${{ matrix.target }} --release --examples
 
-      - name: Verify static linking (Windows GNU - macOS)
-        if: matrix.target == 'x86_64-pc-windows-gnu' && matrix.os == 'macos-latest'
+      - name: Verify static linking (Windows GNU)
+        if: matrix.target == 'x86_64-pc-windows-gnu'
+        shell: bash
         run: |
-          # Cross-compilation from macOS - check DLL dependencies
-          find target/${{ matrix.target }}/release -name "*.exe" -exec x86_64-w64-mingw32-objdump -p {} \; | grep "DLL Name" | grep -E "(libgcc|libstdc|libwinpthread)" && exit 1 || echo "✅ No problematic MinGW DLL dependencies found"
-
-      - name: Verify static linking (Windows GNU - Windows)
-        if: matrix.target == 'x86_64-pc-windows-gnu' && matrix.os == 'windows-latest'
-        shell: pwsh
-        run: |
-          # Native Windows build - use dumpbin if available, otherwise skip detailed check
-          Write-Output "✅ Windows native build completed successfully"
+          if [ "${{ matrix.os }}" = "macos-latest" ]; then
+            # Cross-compilation from macOS - check DLL dependencies using objdump
+            find target/${{ matrix.target }}/release -name "*.exe" -exec x86_64-w64-mingw32-objdump -p {} \; | grep "DLL Name" | grep -E "(libgcc|libstdc|libwinpthread)" && exit 1 || echo "✅ No problematic MinGW DLL dependencies found"
+          else
+            # Native Windows build - bash is available via Git Bash
+            echo "✅ Windows GNU native build completed successfully"
+          fi
 
   android:
     name: Android ${{ matrix.target }}
