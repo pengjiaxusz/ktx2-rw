@@ -349,10 +349,10 @@ fn link_system_libraries(target_os: &str, target_env: &str) {
         }
         "linux" => {
             if target_env == "musl" {
-                // For musl targets, we need to link C++ standard library
-                // Since we're building a static library, we need to provide the C++ runtime
-                println!("cargo:rustc-link-lib=stdc++");
-                println!("cargo:rustc-link-lib=gcc_s");
+                // For musl targets, we need to link C++ standard library statically
+                // gcc_s doesn't exist in static form for musl, so we use gcc_eh instead
+                println!("cargo:rustc-link-lib=static=stdc++");
+                println!("cargo:rustc-link-lib=static=gcc_eh");
             } else {
                 // For glibc, use dynamic linking
                 println!("cargo:rustc-link-lib=stdc++");

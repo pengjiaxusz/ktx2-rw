@@ -120,8 +120,10 @@ jobs:
           sudo apt-get install -y musl-tools musl-dev
           # Install full build toolchain with static libraries
           sudo apt-get install -y build-essential
-          # We'll use the system GCC/G++ with musl since the static linking
-          # is handled by CMake flags rather than requiring musl-specific compilers
+          # Install static C++ standard library (needed for linking examples)
+          sudo apt-get install -y libstdc++-12-dev libgcc-s1
+          # Find and show available static libraries for debugging
+          find /usr/lib/gcc /usr/lib/x86_64-linux-gnu -name "*stdc++*" -o -name "*gcc_eh*" 2>/dev/null | head -10 || true
 
       - name: Install libc++ (Linux)
         if: matrix.os == 'ubuntu-latest'
