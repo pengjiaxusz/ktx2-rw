@@ -59,6 +59,8 @@ impl Ktx2Texture {
                     #[cfg(windows)]
                     {
                         ktxTextureCreateFlagBits_KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT
+                            .try_into()
+                            .unwrap_or(0)
                     }
                     #[cfg(not(windows))]
                     {
@@ -87,6 +89,8 @@ impl Ktx2Texture {
                     #[cfg(windows)]
                     {
                         ktxTextureCreateFlagBits_KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT
+                            .try_into()
+                            .unwrap_or(0)
                     }
                     #[cfg(not(windows))]
                     {

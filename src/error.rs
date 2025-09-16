@@ -106,7 +106,7 @@ impl From<ktx_error_code_e> for Error {
             _ => Error::Other({
                 #[cfg(windows)]
                 {
-                    code
+                    code.try_into().unwrap_or(0)
                 }
                 #[cfg(not(windows))]
                 {
