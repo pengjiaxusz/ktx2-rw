@@ -346,10 +346,17 @@ fn link_system_libraries(target_os: &str, target_env: &str) {
         }
         "linux" => {
             if target_env == "musl" {
-                // For musl targets, we need to link C++ runtime statically
+                // For musl targets, try different linking approaches
                 // The KTX-Software library contains C++ code that requires these symbols
-                println!("cargo:rustc-link-lib=static=stdc++");
-                println!("cargo:rustc-link-lib=static=gcc_eh");
+                // First try static linking, then fall back to dynamic if static not available
+                if std::path::Path::new("/usr/lib/x86_64-linux-musl/libstdc++.a").exists() {
+                    println!("cargo:rustc-link-lib=static=stdc++");
+                    println!("cargo:rustc-link-lib=static=gcc_eh");
+                } else {
+                    // Fallback: use dynamic linking for musl
+                    println!("cargo:rustc-link-lib=stdc++");
+                    println!("cargo:rustc-link-lib=gcc_s");
+                }
             } else {
                 // For glibc, use dynamic linking
                 println!("cargo:rustc-link-lib=stdc++");
