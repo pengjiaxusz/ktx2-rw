@@ -124,14 +124,11 @@ fn build_ktx_software(
         }
     }
 
-    let (_, lib_name, lib_type) = found_lib.expect("No KTX library found after build");
+    let (_, _lib_name, lib_type) = found_lib.expect("No KTX library found after build");
 
-    // Handle different library types - only warn for dynamic libraries
+    // Handle different library types
     if matches!(lib_type.as_str(), "dylib") {
-        println!(
-            "cargo:warning=Built dynamic library {}, you may need to set LD_LIBRARY_PATH or DYLD_LIBRARY_PATH",
-            lib_name
-        );
+        // Dynamic library built - user may need to configure library paths
     }
 }
 
@@ -372,56 +369,154 @@ fn link_system_libraries(target_os: &str, target_env: &str, target: &str) {
                 // that are required by the embedded Basis Universal C++ code
 
                 // Add search paths for MinGW libraries on different platforms
-                if !cfg!(windows) {
-                    // Cross-compiling from non-Windows (likely macOS/Linux)
+                // Also handle CI environments that might be running on Windows but cross-compiling
+                let is_cross_compiling = !cfg!(windows) || env::var("CI").is_ok();
+                let mut found_lib_path = false;
+
+                let arch = if target.contains("x86_64") {
+                    "x86_64"
+                } else {
+                    "i686"
+                };
+                let triple = format!("{}-w64-mingw32", arch);
+
+                if is_cross_compiling {
+                    // Cross-compiling from non-Windows (likely macOS/Linux/CI)
+
+                    // Try macOS Homebrew first (dynamic discovery)
                     if cfg!(target_os = "macos") {
-                        // macOS with Homebrew mingw-w64
-                        let arch = if target.contains("x86_64") {
-                            "x86_64"
-                        } else {
-                            "i686"
-                        };
-                        let triple = format!("{}-w64-mingw32", arch);
-
-                        // Try to find the toolchain dynamically
-                        if let Ok(entries) = std::fs::read_dir("/opt/homebrew/Cellar/mingw-w64") {
-                            for entry in entries.flatten() {
-                                let version_path = entry.path();
-                                let toolchain_path =
-                                    version_path.join(format!("toolchain-{}", arch));
-                                if toolchain_path.exists() {
-                                    let lib_path = toolchain_path.join(&triple).join("lib");
-                                    if lib_path.exists() {
-                                        println!(
-                                            "cargo:rustc-link-search=native={}",
-                                            lib_path.display()
-                                        );
-                                    }
-
-                                    let gcc_path =
-                                        toolchain_path.join("lib").join("gcc").join(&triple);
-                                    if gcc_path.exists()
-                                        && let Ok(gcc_entries) = std::fs::read_dir(&gcc_path)
-                                    {
-                                        for gcc_entry in gcc_entries.flatten() {
+                        for homebrew_path in [
+                            "/opt/homebrew/Cellar/mingw-w64",
+                            "/usr/local/Cellar/mingw-w64",
+                        ] {
+                            if let Ok(entries) = std::fs::read_dir(homebrew_path) {
+                                for entry in entries.flatten() {
+                                    let version_path = entry.path();
+                                    let toolchain_path =
+                                        version_path.join(format!("toolchain-{}", arch));
+                                    if toolchain_path.exists() {
+                                        let lib_path = toolchain_path.join(&triple).join("lib");
+                                        if lib_path.exists() {
                                             println!(
                                                 "cargo:rustc-link-search=native={}",
-                                                gcc_entry.path().display()
+                                                lib_path.display()
+                                            );
+                                            found_lib_path = true;
+                                        }
+
+                                        let gcc_path =
+                                            toolchain_path.join("lib").join("gcc").join(&triple);
+                                        if gcc_path.exists()
+                                            && let Ok(gcc_entries) = std::fs::read_dir(&gcc_path)
+                                        {
+                                            for gcc_entry in gcc_entries.flatten() {
+                                                println!(
+                                                    "cargo:rustc-link-search=native={}",
+                                                    gcc_entry.path().display()
+                                                );
+                                            }
+                                        }
+                                        break;
+                                    }
+                                }
+                                if found_lib_path {
+                                    break;
+                                }
+                            }
+                        }
+                    }
+
+                    // If not found via Homebrew, try standard Linux/CI paths
+                    if !found_lib_path {
+                        // Try standard system paths for MinGW
+                        let standard_paths = [
+                            // Standard Ubuntu/Debian MinGW package paths
+                            format!("/usr/{}/lib", triple),
+                            format!("/usr/lib/gcc/{}", triple),
+                            format!("/usr/lib/gcc-mingw-w64-{}", arch),
+                            format!("/usr/lib/gcc-cross/{}", triple),
+                            // GitHub Actions specific paths
+                            "/usr/share/mingw-w64/lib".to_string(),
+                            "/usr/lib/mingw-w64".to_string(),
+                            // Windows paths when running on Windows CI
+                            "C:/msys64/mingw64/lib".to_string(),
+                            "C:/msys64/mingw32/lib".to_string(),
+                            "C:/mingw64/lib".to_string(),
+                            "C:/mingw32/lib".to_string(),
+                            // Standard MSYS2 paths
+                            "/mingw64/lib".to_string(),
+                            "/mingw32/lib".to_string(),
+                            "/usr/lib".to_string(),
+                        ];
+
+                        for path_str in &standard_paths {
+                            let path = std::path::Path::new(path_str);
+                            if path.exists() {
+                                println!("cargo:rustc-link-search=native={}", path.display());
+                                found_lib_path = true;
+
+                                // Also try to find GCC version subdirectories
+                                if let Ok(entries) = std::fs::read_dir(path) {
+                                    for entry in entries.flatten() {
+                                        let entry_path = entry.path();
+                                        if entry_path.is_dir()
+                                            && entry_path
+                                                .file_name()
+                                                .unwrap()
+                                                .to_string_lossy()
+                                                .chars()
+                                                .next()
+                                                .unwrap_or('a')
+                                                .is_ascii_digit()
+                                        {
+                                            // This looks like a version directory (starts with digit)
+                                            println!(
+                                                "cargo:rustc-link-search=native={}",
+                                                entry_path.display()
                                             );
                                         }
                                     }
-                                    break; // Use the first available version
+                                }
+                                break;
+                            }
+                        }
+                    }
+
+                    // Last resort: try to use the toolchain from environment variables
+                    if !found_lib_path {
+                        // Check common environment variables
+                        let env_vars = ["MINGW_PREFIX", "MINGW_ROOT", "MSYSTEM_PREFIX"];
+                        for env_var in &env_vars {
+                            if let Ok(toolchain_path) = env::var(env_var) {
+                                let lib_path = format!("{}/lib", toolchain_path);
+                                let path = std::path::Path::new(&lib_path);
+                                if path.exists() {
+                                    println!("cargo:rustc-link-search=native={}", lib_path);
+                                    found_lib_path = true;
+                                    break;
                                 }
                             }
                         }
                     }
                 }
 
+                // Static linking is required for cross-compilation to Windows GNU
+                // to ensure C++ symbols from Basis Universal are properly embedded
+                if !found_lib_path {
+                    panic!(
+                        "Could not find MinGW C++ static libraries for cross-compilation. \
+                        Please ensure MinGW-w64 is properly installed. \
+                        Searched paths: \
+                        - macOS: /opt/homebrew/Cellar/mingw-w64, /usr/local/Cellar/mingw-w64 \
+                        - Linux: /usr/{}/lib, /usr/lib/gcc/{} \
+                        - Environment: MINGW_PREFIX",
+                        triple, triple
+                    );
+                }
+
                 println!("cargo:rustc-link-lib=static=stdc++");
                 println!("cargo:rustc-link-lib=static=gcc_eh");
                 println!("cargo:rustc-link-lib=static=winpthread");
-
-                // Required for C++ exception handling
                 println!("cargo:rustc-link-lib=static=gcc");
 
                 // Additional system libraries needed by KTX-Software

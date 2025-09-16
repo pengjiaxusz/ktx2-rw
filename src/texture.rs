@@ -58,6 +58,7 @@ impl Ktx2Texture {
                 {
                     #[cfg(windows)]
                     {
+                        #[allow(clippy::useless_conversion)]
                         ktxTextureCreateFlagBits_KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT
                             .try_into()
                             .unwrap_or(0)
@@ -88,6 +89,7 @@ impl Ktx2Texture {
                 {
                     #[cfg(windows)]
                     {
+                        #[allow(clippy::useless_conversion)]
                         ktxTextureCreateFlagBits_KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT
                             .try_into()
                             .unwrap_or(0)
