@@ -50,8 +50,7 @@ jobs:
           path: target
           key: >
             ${{ runner.os }}-cargo-build-target-
-            ${{ hashFiles('**/Cargo.lock') }}-
-            ${{ hashFiles('.cargo/config.toml') }}
+            ${{ hashFiles('**/Cargo.lock') }}
 
       - name: Install libc++ (Linux)
         if: matrix.os == 'ubuntu-latest'
@@ -92,13 +91,6 @@ jobs:
           - os: macos-latest
             target: x86_64-apple-ios
 
-          # Windows from macOS (cross-compilation test)
-          - os: macos-latest
-            target: x86_64-pc-windows-gnu
-
-          # Windows native GNU (alternative to MSVC)
-          - os: windows-latest
-            target: x86_64-pc-windows-gnu
 
     runs-on: ${{ matrix.os }}
 
@@ -117,19 +109,6 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libc++-dev libc++abi-dev
 
-      - name: Install MinGW toolchain (Windows)
-        if: >
-          matrix.target == 'x86_64-pc-windows-gnu' &&
-          matrix.os == 'windows-latest'
-        run: |
-          choco install mingw
-
-      - name: Install MinGW toolchain (macOS cross-compilation)
-        if: >
-          matrix.target == 'x86_64-pc-windows-gnu' &&
-          matrix.os == 'macos-latest'
-        run: |
-          brew install mingw-w64
 
       - name: Cache cargo
         uses: actions/cache@v4
@@ -140,8 +119,7 @@ jobs:
             target
           key: >
             ${{ matrix.os }}-cargo-${{ matrix.target }}-
-            ${{ hashFiles('**/Cargo.lock') }}-
-            ${{ hashFiles('.cargo/config.toml') }}
+            ${{ hashFiles('**/Cargo.lock') }}
 
       - name: Build for target
         run: cargo build --target ${{ matrix.target }} --release
@@ -149,17 +127,6 @@ jobs:
       - name: Build examples for target
         run: cargo build --target ${{ matrix.target }} --release --examples
 
-      - name: Verify static linking (Windows GNU)
-        if: matrix.target == 'x86_64-pc-windows-gnu'
-        shell: bash
-        run: |
-          if [ "${{ matrix.os }}" = "macos-latest" ]; then
-            # Cross-compilation from macOS - check DLL dependencies using objdump
-            find target/${{ matrix.target }}/release -name "*.exe" -exec x86_64-w64-mingw32-objdump -p {} \; | grep "DLL Name" | grep -E "(libgcc|libstdc|libwinpthread)" && exit 1 || echo "✅ No problematic MinGW DLL dependencies found"
-          else
-            # Native Windows build - bash is available via Git Bash
-            echo "✅ Windows GNU native build completed successfully"
-          fi
 
   android:
     name: Android ${{ matrix.target }}
@@ -194,8 +161,7 @@ jobs:
             target
           key: >
             android-cargo-${{ matrix.target }}-
-            ${{ hashFiles('**/Cargo.lock') }}-
-            ${{ hashFiles('.cargo/config.toml') }}
+            ${{ hashFiles('**/Cargo.lock') }}
 
       - name: Build for Android
         env:
@@ -223,8 +189,7 @@ jobs:
             ~/.cargo/git
             target
           key: >
-            musl-cargo-${{ hashFiles('**/Cargo.lock') }}-
-            ${{ hashFiles('.cargo/config.toml') }}
+            musl-cargo-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Build
         run: cargo build --target x86_64-unknown-linux-musl --release
