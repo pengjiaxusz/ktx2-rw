@@ -203,7 +203,7 @@ jobs:
         run: cargo build --target ${{ matrix.target }} --release
 
   musl:
-    name: Native Linux musl
+    name: Test on x86_64-unknown-linux-musl
     runs-on: ubuntu-latest
     container: alpine:latest
 
@@ -218,6 +218,7 @@ jobs:
             cmake \
             pkgconfig \
             openssl-dev \
+            openssl-libs-static \
             ca-certificates
 
       - uses: actions/checkout@v4
