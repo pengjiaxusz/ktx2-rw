@@ -369,8 +369,7 @@ fn link_system_libraries(target_os: &str, target_env: &str, target: &str) {
                 // that are required by the embedded Basis Universal C++ code
 
                 // Add search paths for MinGW libraries on different platforms
-                // Also handle CI environments that might be running on Windows but cross-compiling
-                let is_cross_compiling = !cfg!(windows) || env::var("CI").is_ok();
+                // Handle different CI and development environments
                 let mut found_lib_path = false;
 
                 let arch = if target.contains("x86_64") {
@@ -380,10 +379,59 @@ fn link_system_libraries(target_os: &str, target_env: &str, target: &str) {
                 };
                 let triple = format!("{}-w64-mingw32", arch);
 
-                if is_cross_compiling {
-                    // Cross-compiling from non-Windows (likely macOS/Linux/CI)
+                // Always try to find MinGW libraries when targeting Windows GNU
+                {
+                    // Try Windows-native MinGW installations first (for Windows CI)
+                    if cfg!(windows) {
+                        let windows_mingw_paths = [
+                            // MSYS2 installations
+                            format!(
+                                "C:/msys64/mingw{}/lib",
+                                if arch == "x86_64" { "64" } else { "32" }
+                            ),
+                            format!("C:/msys64/{}/lib", triple),
+                            // Standalone MinGW installations
+                            format!("C:/mingw{}/lib", if arch == "x86_64" { "64" } else { "32" }),
+                            "C:/MinGW/lib".to_string(),
+                            // TDM-GCC installations
+                            format!(
+                                "C:/TDM-GCC-{}/lib",
+                                if arch == "x86_64" { "64" } else { "32" }
+                            ),
+                            // GitHub Actions pre-installed paths
+                            format!(
+                                "C:/ProgramData/chocolatey/lib/mingw/tools/install/mingw{}/lib",
+                                if arch == "x86_64" { "64" } else { "32" }
+                            ),
+                        ];
 
-                    // Try macOS Homebrew first (dynamic discovery)
+                        for path_str in &windows_mingw_paths {
+                            let path = std::path::Path::new(path_str);
+                            if path.exists() {
+                                println!("cargo:rustc-link-search=native={}", path.display());
+                                found_lib_path = true;
+
+                                // Also check for GCC subdirectories
+                                let gcc_path = path.join("gcc").join(&triple);
+                                if gcc_path.exists()
+                                    && let Ok(gcc_entries) = std::fs::read_dir(&gcc_path)
+                                {
+                                    for gcc_entry in gcc_entries.flatten() {
+                                        let entry_path = gcc_entry.path();
+                                        if entry_path.is_dir() {
+                                            println!(
+                                                "cargo:rustc-link-search=native={}",
+                                                entry_path.display()
+                                            );
+                                        }
+                                    }
+                                }
+                                break;
+                            }
+                        }
+                    }
+
+                    // Try macOS Homebrew (for macOS cross-compilation)
                     if cfg!(target_os = "macos") {
                         for homebrew_path in [
                             "/opt/homebrew/Cellar/mingw-w64",
@@ -485,13 +533,50 @@ fn link_system_libraries(target_os: &str, target_env: &str, target: &str) {
                     // Last resort: try to use the toolchain from environment variables
                     if !found_lib_path {
                         // Check common environment variables
-                        let env_vars = ["MINGW_PREFIX", "MINGW_ROOT", "MSYSTEM_PREFIX"];
+                        let env_vars =
+                            ["MINGW_PREFIX", "MINGW_ROOT", "MSYSTEM_PREFIX", "MSYS2_ROOT"];
                         for env_var in &env_vars {
                             if let Ok(toolchain_path) = env::var(env_var) {
                                 let lib_path = format!("{}/lib", toolchain_path);
                                 let path = std::path::Path::new(&lib_path);
                                 if path.exists() {
                                     println!("cargo:rustc-link-search=native={}", lib_path);
+                                    found_lib_path = true;
+
+                                    // Also try architecture-specific subdirectory
+                                    let arch_lib_path = format!(
+                                        "{}/mingw{}/lib",
+                                        toolchain_path,
+                                        if arch == "x86_64" { "64" } else { "32" }
+                                    );
+                                    let arch_path = std::path::Path::new(&arch_lib_path);
+                                    if arch_path.exists() {
+                                        println!(
+                                            "cargo:rustc-link-search=native={}",
+                                            arch_lib_path
+                                        );
+                                    }
+                                    break;
+                                }
+                            }
+                        }
+
+                        // If still not found, try to detect via common Windows locations
+                        if !found_lib_path && cfg!(windows) {
+                            // Check if we can find MinGW via common installation patterns
+                            let fallback_paths = [
+                                "C:/tools/mingw64/lib".to_string(),
+                                "C:/tools/msys2/mingw64/lib".to_string(),
+                                format!(
+                                    "{}/.cargo/bin/../lib",
+                                    env::var("USERPROFILE").unwrap_or_default()
+                                ),
+                            ];
+
+                            for path_str in &fallback_paths {
+                                let path = std::path::Path::new(path_str);
+                                if path.exists() {
+                                    println!("cargo:rustc-link-search=native={}", path.display());
                                     found_lib_path = true;
                                     break;
                                 }
@@ -503,14 +588,27 @@ fn link_system_libraries(target_os: &str, target_env: &str, target: &str) {
                 // Static linking is required for cross-compilation to Windows GNU
                 // to ensure C++ symbols from Basis Universal are properly embedded
                 if !found_lib_path {
+                    let host_os = if cfg!(windows) {
+                        "Windows"
+                    } else if cfg!(target_os = "macos") {
+                        "macOS"
+                    } else {
+                        "Linux"
+                    };
                     panic!(
-                        "Could not find MinGW C++ static libraries for cross-compilation. \
+                        "Could not find MinGW C++ static libraries for cross-compilation to {}. \
+                        Host OS: {}. \
                         Please ensure MinGW-w64 is properly installed. \
-                        Searched paths: \
-                        - macOS: /opt/homebrew/Cellar/mingw-w64, /usr/local/Cellar/mingw-w64 \
+                        Common installation methods: \
+                        - Windows: Install MSYS2 (https://www.msys2.org/) and run 'pacman -S mingw-w64-x86_64-toolchain' \
+                        - macOS: Install via Homebrew 'brew install mingw-w64' \
+                        - Linux: Install via package manager 'apt-get install gcc-mingw-w64' \
+                        Searched paths include: \
+                        - Windows: C:/msys64/mingw64/lib, C:/mingw64/lib \
+                        - macOS: /opt/homebrew/Cellar/mingw-w64 \
                         - Linux: /usr/{}/lib, /usr/lib/gcc/{} \
-                        - Environment: MINGW_PREFIX",
-                        triple, triple
+                        - Environment variables: MINGW_PREFIX, MSYSTEM_PREFIX",
+                        triple, host_os, triple, triple
                     );
                 }
 
