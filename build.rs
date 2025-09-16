@@ -293,7 +293,10 @@ fn configure_cmake_for_target(
                     "-static -static-libgcc -static-libstdc++",
                 );
                 // Ensure static libraries are built and linked properly
-                cmake_config.define("CMAKE_STATIC_LINKER_FLAGS", "-static -static-libgcc -static-libstdc++");
+                cmake_config.define(
+                    "CMAKE_STATIC_LINKER_FLAGS",
+                    "-static -static-libgcc -static-libstdc++",
+                );
 
                 // Use standard system compilers for musl builds
                 // The static linking is handled by the flags above
