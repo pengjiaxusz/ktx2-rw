@@ -71,8 +71,7 @@ fn build_ktx_software(
 
     // Basic configuration - match KTX-Software's official build approach
     cmake_config
-        .define("KTX_FEATURE_STATIC_LIBRARY", "ON")
-        .define("BUILD_SHARED_LIBS", "OFF")
+        .define("BUILD_SHARED_LIBS", "OFF")  // This automatically sets KHRONOS_STATIC
         .define("KTX_FEATURE_TOOLS", "OFF")
         .define("KTX_FEATURE_TESTS", "OFF")
         .define("KTX_FEATURE_LOADTEST_APPS", "OFF")
@@ -279,23 +278,10 @@ fn configure_cmake_for_target(
 
             // Handle musl vs glibc
             if target_env == "musl" {
-                // For musl, disable fortify source and use minimal flags
-                cmake_config.define("CMAKE_C_FLAGS", "-D_FORTIFY_SOURCE=0 -U_FORTIFY_SOURCE");
-                cmake_config.define("CMAKE_CXX_FLAGS", "-D_FORTIFY_SOURCE=0 -U_FORTIFY_SOURCE");
-
-                // Only apply static linking to final executables/shared libraries, not static libraries
-                cmake_config.define(
-                    "CMAKE_EXE_LINKER_FLAGS",
-                    "-static -static-libgcc -static-libstdc++",
-                );
-                cmake_config.define(
-                    "CMAKE_SHARED_LINKER_FLAGS",
-                    "-static -static-libgcc -static-libstdc++",
-                );
-
-                // Use standard system compilers for musl builds
-                cmake_config.define("CMAKE_C_COMPILER", "gcc");
-                cmake_config.define("CMAKE_CXX_COMPILER", "g++");
+                // For musl, just disable fortify source to avoid warnings
+                // Let KTX-Software's CMake configuration handle everything else
+                cmake_config.define("CMAKE_C_FLAGS", "-D_FORTIFY_SOURCE=0");
+                cmake_config.define("CMAKE_CXX_FLAGS", "-D_FORTIFY_SOURCE=0");
             }
         }
         "android" => {
@@ -349,10 +335,9 @@ fn link_system_libraries(target_os: &str, target_env: &str) {
         }
         "linux" => {
             if target_env == "musl" {
-                // For musl targets, we need to link C++ standard library statically
-                // gcc_s doesn't exist in static form for musl, so we use gcc_eh instead
-                println!("cargo:rustc-link-lib=static=stdc++");
-                println!("cargo:rustc-link-lib=static=gcc_eh");
+                // For musl targets, don't link C++ libraries explicitly
+                // Let the musl toolchain and static linking flags in cargo config handle everything
+                // The CMake build will embed C++ dependencies into the static library
             } else {
                 // For glibc, use dynamic linking
                 println!("cargo:rustc-link-lib=stdc++");
