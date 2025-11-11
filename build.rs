@@ -277,19 +277,39 @@ fn configure_cmake_for_target(
             if target_env == "musl" {
                 // For musl, configure for static linking of C++ runtime
                 // Use -U to undefine _FORTIFY_SOURCE first, then redefine to avoid redefinition errors
-                cmake_config.define(
-                    "CMAKE_C_FLAGS",
-                    "-U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=0 -static-libgcc -fPIE",
-                );
-                cmake_config.define(
-                    "CMAKE_CXX_FLAGS",
-                    "-U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=0 -static-libgcc -static-libstdc++ -fPIE",
-                );
-                cmake_config.define("CMAKE_EXE_LINKER_FLAGS", "-static-libgcc -static-libstdc++");
-                cmake_config.define(
-                    "CMAKE_SHARED_LINKER_FLAGS",
-                    "-static-libgcc -static-libstdc++",
-                );
+
+                // Check if we're using Zig by looking at the C/CXX compiler
+                let is_zig = env::var("CC").unwrap_or_default().contains("zig")
+                    || env::var("CXX").unwrap_or_default().contains("zig");
+
+                if is_zig {
+                    // When using Zig, use libc++ instead of libstdc++
+                    cmake_config.define(
+                        "CMAKE_C_FLAGS",
+                        "-U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=0 -fPIE",
+                    );
+                    cmake_config.define(
+                        "CMAKE_CXX_FLAGS",
+                        "-U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=0 -stdlib=libc++ -fPIE",
+                    );
+                    cmake_config.define("CMAKE_EXE_LINKER_FLAGS", "-stdlib=libc++");
+                    cmake_config.define("CMAKE_SHARED_LINKER_FLAGS", "-stdlib=libc++");
+                } else {
+                    // Traditional musl toolchain with libstdc++
+                    cmake_config.define(
+                        "CMAKE_C_FLAGS",
+                        "-U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=0 -static-libgcc -fPIE",
+                    );
+                    cmake_config.define(
+                        "CMAKE_CXX_FLAGS",
+                        "-U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=0 -static-libgcc -static-libstdc++ -fPIE",
+                    );
+                    cmake_config.define("CMAKE_EXE_LINKER_FLAGS", "-static-libgcc -static-libstdc++");
+                    cmake_config.define(
+                        "CMAKE_SHARED_LINKER_FLAGS",
+                        "-static-libgcc -static-libstdc++",
+                    );
+                }
             }
         }
         "android" => {
@@ -345,15 +365,28 @@ fn link_system_libraries(target_os: &str, target_env: &str, target: &str) {
             if target_env == "musl" {
                 // For musl targets, we need to link C++ runtime statically
                 // The KTX-Software library contains C++ code that requires these symbols
-                // Add search paths for musl toolchain libraries
-                println!(
-                    "cargo:rustc-link-search=native=/usr/local/musl/x86_64-unknown-linux-musl/lib"
-                );
-                println!(
-                    "cargo:rustc-link-search=native=/usr/local/musl/lib/gcc/x86_64-unknown-linux-musl/11.2.0"
-                );
-                println!("cargo:rustc-link-lib=static=stdc++");
-                println!("cargo:rustc-link-lib=static=gcc_eh");
+
+                // Check if we're using Zig by looking at the C/CXX compiler
+                let is_zig = env::var("CC").unwrap_or_default().contains("zig")
+                    || env::var("CXX").unwrap_or_default().contains("zig")
+                    || env::var("CARGO_ZIGBUILD").is_ok();
+
+                if is_zig {
+                    // When using cargo-zigbuild, use Zig's bundled libc++
+                    // Zig handles linking automatically, so we just need to specify the library
+                    println!("cargo:rustc-link-lib=c++");
+                } else {
+                    // Traditional musl toolchain with libstdc++
+                    // Add search paths for musl toolchain libraries
+                    println!(
+                        "cargo:rustc-link-search=native=/usr/local/musl/x86_64-unknown-linux-musl/lib"
+                    );
+                    println!(
+                        "cargo:rustc-link-search=native=/usr/local/musl/lib/gcc/x86_64-unknown-linux-musl/11.2.0"
+                    );
+                    println!("cargo:rustc-link-lib=static=stdc++");
+                    println!("cargo:rustc-link-lib=static=gcc_eh");
+                }
             } else {
                 // For glibc, use dynamic linking
                 println!("cargo:rustc-link-lib=stdc++");
