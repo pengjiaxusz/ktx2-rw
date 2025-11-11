@@ -208,6 +208,19 @@ fn configure_cmake_for_target(
     target_arch: &str,
     target_env: &str,
 ) {
+    // Check if we're using cargo-zigbuild by looking for its cache directory
+    let is_using_zigbuild = std::path::Path::new(&format!(
+        "{}/.cargo-zigbuild",
+        env::var("HOME").unwrap_or_default()
+    ))
+    .exists()
+        || env::var("HOME")
+            .ok()
+            .and_then(|home| {
+                std::fs::read_dir(format!("{}/Library/Caches/cargo-zigbuild", home)).ok()
+            })
+            .is_some();
+
     match target_os {
         "windows" => {
             cmake_config.define("CMAKE_SYSTEM_NAME", "Windows");
@@ -278,22 +291,16 @@ fn configure_cmake_for_target(
                 // For musl, configure for static linking of C++ runtime
                 // Use -U to undefine _FORTIFY_SOURCE first, then redefine to avoid redefinition errors
 
-                // Check if we're using Zig by looking at the C/CXX compiler
-                let is_zig = env::var("CC").unwrap_or_default().contains("zig")
-                    || env::var("CXX").unwrap_or_default().contains("zig");
-
-                if is_zig {
-                    // When using Zig, use libc++ instead of libstdc++
+                if is_using_zigbuild {
+                    // When using cargo-zigbuild, don't specify C++ stdlib - Zig will handle it
                     cmake_config.define(
                         "CMAKE_C_FLAGS",
                         "-U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=0 -fPIE",
                     );
                     cmake_config.define(
                         "CMAKE_CXX_FLAGS",
-                        "-U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=0 -stdlib=libc++ -fPIE",
+                        "-U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=0 -fPIE",
                     );
-                    cmake_config.define("CMAKE_EXE_LINKER_FLAGS", "-stdlib=libc++");
-                    cmake_config.define("CMAKE_SHARED_LINKER_FLAGS", "-stdlib=libc++");
                 } else {
                     // Traditional musl toolchain with libstdc++
                     cmake_config.define(
@@ -304,7 +311,8 @@ fn configure_cmake_for_target(
                         "CMAKE_CXX_FLAGS",
                         "-U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=0 -static-libgcc -static-libstdc++ -fPIE",
                     );
-                    cmake_config.define("CMAKE_EXE_LINKER_FLAGS", "-static-libgcc -static-libstdc++");
+                    cmake_config
+                        .define("CMAKE_EXE_LINKER_FLAGS", "-static-libgcc -static-libstdc++");
                     cmake_config.define(
                         "CMAKE_SHARED_LINKER_FLAGS",
                         "-static-libgcc -static-libstdc++",
@@ -357,6 +365,19 @@ fn get_lib_name(target_os: &str) -> &'static str {
 }
 
 fn link_system_libraries(target_os: &str, target_env: &str, target: &str) {
+    // Check if we're using cargo-zigbuild
+    let is_using_zigbuild = std::path::Path::new(&format!(
+        "{}/.cargo-zigbuild",
+        env::var("HOME").unwrap_or_default()
+    ))
+    .exists()
+        || env::var("HOME")
+            .ok()
+            .and_then(|home| {
+                std::fs::read_dir(format!("{}/Library/Caches/cargo-zigbuild", home)).ok()
+            })
+            .is_some();
+
     match target_os {
         "macos" => {
             println!("cargo:rustc-link-lib=c++");
@@ -366,15 +387,10 @@ fn link_system_libraries(target_os: &str, target_env: &str, target: &str) {
                 // For musl targets, we need to link C++ runtime statically
                 // The KTX-Software library contains C++ code that requires these symbols
 
-                // Check if we're using Zig by looking at the C/CXX compiler
-                let is_zig = env::var("CC").unwrap_or_default().contains("zig")
-                    || env::var("CXX").unwrap_or_default().contains("zig")
-                    || env::var("CARGO_ZIGBUILD").is_ok();
-
-                if is_zig {
-                    // When using cargo-zigbuild, use Zig's bundled libc++
-                    // Zig handles linking automatically, so we just need to specify the library
-                    println!("cargo:rustc-link-lib=c++");
+                if is_using_zigbuild {
+                    // When using cargo-zigbuild, pass C++ link as a linker arg
+                    // Zig will handle finding the right library
+                    println!("cargo:rustc-link-arg=-lc++");
                 } else {
                     // Traditional musl toolchain with libstdc++
                     // Add search paths for musl toolchain libraries
