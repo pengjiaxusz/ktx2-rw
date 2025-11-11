@@ -1,6 +1,6 @@
 [package]
 name = "ktx2-rw"
-version = "0.2.2"
+version = "0.2.3"
 edition = "2024"
 authors = ["Allen Dang <allengnr@gmail.com>"]
 description = "A high-level Rust wrapper for KTX2 texture format with full Basis Universal support"
