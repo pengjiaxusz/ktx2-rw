@@ -370,6 +370,82 @@ fn get_lib_name(target_os: &str) -> &'static str {
     }
 }
 
+/// Search for musl GCC libraries in common locations
+fn find_musl_gcc_libs() -> Vec<String> {
+    let mut found_paths = Vec::new();
+
+    // Common base paths for musl toolchains
+    let base_paths = [
+        "/usr/local/musl",
+        "/usr/lib",
+        "/usr",
+        // messense/rust-musl-cross container paths
+        "/usr/local/x86_64-linux-musl",
+    ];
+
+    let target_triple = "x86_64-unknown-linux-musl";
+    let alt_triple = "x86_64-linux-musl";
+
+    for base in &base_paths {
+        // Check for lib directory directly under base
+        let lib_path = format!("{}/lib", base);
+        if std::path::Path::new(&lib_path).exists() {
+            // Check if this directory has libstdc++.a
+            if std::path::Path::new(&lib_path).join("libstdc++.a").exists() {
+                found_paths.push(lib_path.clone());
+            }
+        }
+
+        // Check for target-specific lib directories
+        for triple in &[target_triple, alt_triple] {
+            let target_lib_path = format!("{}/{}/lib", base, triple);
+            if std::path::Path::new(&target_lib_path).exists() {
+                found_paths.push(target_lib_path);
+            }
+        }
+
+        // Search for GCC version directories
+        for triple in &[target_triple, alt_triple] {
+            let gcc_base = format!("{}/lib/gcc/{}", base, triple);
+            if let Ok(entries) = std::fs::read_dir(&gcc_base) {
+                for entry in entries.flatten() {
+                    let entry_path = entry.path();
+                    if entry_path.is_dir() {
+                        // Check if this looks like a version directory (e.g., "11.2.0", "12.1.0")
+                        if let Some(name) = entry_path.file_name() {
+                            let name_str = name.to_string_lossy();
+                            if name_str.chars().next().map(|c| c.is_ascii_digit()).unwrap_or(false) {
+                                found_paths.push(entry_path.to_string_lossy().to_string());
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // Also check messense container specific paths
+    let messense_paths = [
+        "/usr/local/x86_64-linux-musl/lib/gcc/x86_64-linux-musl",
+        "/x86_64-linux-musl/lib",
+    ];
+
+    for path in &messense_paths {
+        if let Ok(entries) = std::fs::read_dir(path) {
+            for entry in entries.flatten() {
+                let entry_path = entry.path();
+                if entry_path.is_dir() {
+                    found_paths.push(entry_path.to_string_lossy().to_string());
+                }
+            }
+        } else if std::path::Path::new(path).exists() {
+            found_paths.push(path.to_string());
+        }
+    }
+
+    found_paths
+}
+
 fn link_system_libraries(target_os: &str, target_env: &str, target: &str) {
     // Check if we're using cargo-zigbuild
     let is_using_zigbuild = std::path::Path::new(&format!(
@@ -399,15 +475,18 @@ fn link_system_libraries(target_os: &str, target_env: &str, target: &str) {
                     println!("cargo:rustc-link-arg=-lc++");
                 } else {
                     // Traditional musl toolchain with libstdc++
-                    // Add search paths for musl toolchain libraries
-                    println!(
-                        "cargo:rustc-link-search=native=/usr/local/musl/x86_64-unknown-linux-musl/lib"
-                    );
-                    println!(
-                        "cargo:rustc-link-search=native=/usr/local/musl/lib/gcc/x86_64-unknown-linux-musl/11.2.0"
-                    );
+                    // Search for the C++ runtime libraries dynamically
+                    let found_paths = find_musl_gcc_libs();
+                    for path in &found_paths {
+                        println!("cargo:rustc-link-search=native={}", path);
+                    }
                     println!("cargo:rustc-link-lib=static=stdc++");
-                    println!("cargo:rustc-link-lib=static=gcc_eh");
+                    // Only link gcc_eh if we found it, otherwise fall back to gcc_s
+                    if found_paths.iter().any(|p| {
+                        std::path::Path::new(p).join("libgcc_eh.a").exists()
+                    }) {
+                        println!("cargo:rustc-link-lib=static=gcc_eh");
+                    }
                 }
             } else {
                 // For glibc, use dynamic linking
