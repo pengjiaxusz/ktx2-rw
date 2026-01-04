@@ -115,6 +115,24 @@ The library now builds KTX-Software from source at compile time, providing excel
 
 The first build downloads and compiles KTX-Software (~5-10 minutes), but subsequent builds use cached results.
 
+### Build Configuration
+
+The build process can be customized with environment variables:
+
+| Variable | Values | Default | Description |
+| -------- | ------ | ------- | ----------- |
+| `KTX_FEATURE_SSE` | `0`, `off`, `false`, `no` | `on` | Disable SSE optimizations for Basis Universal encoder |
+
+**When to disable SSE:**
+
+If you encounter build errors like `#error Please check your compiler options` in `basisu_kernels_sse.cpp`, you may need to disable SSE:
+
+```bash
+KTX_FEATURE_SSE=0 cargo build
+```
+
+This typically happens when custom `CFLAGS`/`CXXFLAGS` (e.g., `-march=znver3`) conflict with the SSE intrinsics detection.
+
 ## Transcoding Formats
 
 The library supports transcoding to all major GPU texture formats:

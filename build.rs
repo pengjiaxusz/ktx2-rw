@@ -51,6 +51,7 @@ fn main() {
     println!("cargo:rerun-if-env-changed=TARGET");
     println!("cargo:rerun-if-env-changed=CARGO_CFG_TARGET_OS");
     println!("cargo:rerun-if-env-changed=CARGO_CFG_TARGET_ARCH");
+    println!("cargo:rerun-if-env-changed=KTX_FEATURE_SSE");
 }
 
 fn build_ktx_software(
@@ -83,7 +84,12 @@ fn build_ktx_software(
         .out_dir(&ktx_build_dir);
 
     // Configure BASISU options following KTX-Software's approach
-    if target_arch == "x86_64" {
+    // Allow users to disable SSE support via environment variable (useful when custom CFLAGS cause issues)
+    let sse_enabled = env::var("KTX_FEATURE_SSE")
+        .map(|v| !matches!(v.to_lowercase().as_str(), "0" | "off" | "false" | "no"))
+        .unwrap_or(true);
+
+    if target_arch == "x86_64" && sse_enabled {
         cmake_config.define("BASISU_SUPPORT_SSE", "ON");
     } else {
         cmake_config.define("BASISU_SUPPORT_SSE", "OFF");
