@@ -414,7 +414,12 @@ fn find_musl_gcc_libs() -> Vec<String> {
                         // Check if this looks like a version directory (e.g., "11.2.0", "12.1.0")
                         if let Some(name) = entry_path.file_name() {
                             let name_str = name.to_string_lossy();
-                            if name_str.chars().next().map(|c| c.is_ascii_digit()).unwrap_or(false) {
+                            if name_str
+                                .chars()
+                                .next()
+                                .map(|c| c.is_ascii_digit())
+                                .unwrap_or(false)
+                            {
                                 found_paths.push(entry_path.to_string_lossy().to_string());
                             }
                         }
@@ -482,9 +487,10 @@ fn link_system_libraries(target_os: &str, target_env: &str, target: &str) {
                     }
                     println!("cargo:rustc-link-lib=static=stdc++");
                     // Only link gcc_eh if we found it, otherwise fall back to gcc_s
-                    if found_paths.iter().any(|p| {
-                        std::path::Path::new(p).join("libgcc_eh.a").exists()
-                    }) {
+                    if found_paths
+                        .iter()
+                        .any(|p| std::path::Path::new(p).join("libgcc_eh.a").exists())
+                    {
                         println!("cargo:rustc-link-lib=static=gcc_eh");
                     }
                 }
