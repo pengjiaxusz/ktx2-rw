@@ -327,18 +327,21 @@ fn configure_cmake_for_target(
             }
         }
         "android" => {
+            let abi = match target_arch {
+                "aarch64" => "arm64-v8a",
+                "arm" => "armeabi-v7a",
+                "x86_64" => "x86_64",
+                "i686" => "x86",
+                _ => target_arch,
+            };
+
             cmake_config.define("CMAKE_SYSTEM_NAME", "Android");
             cmake_config.define("CMAKE_ANDROID_API", "21");
-            cmake_config.define(
-                "CMAKE_ANDROID_ARCH_ABI",
-                match target_arch {
-                    "aarch64" => "arm64-v8a",
-                    "arm" => "armeabi-v7a",
-                    "x86_64" => "x86_64",
-                    "i686" => "x86",
-                    _ => target_arch,
-                },
-            );
+            cmake_config.define("CMAKE_ANDROID_ARCH_ABI", abi);
+            // ANDROID_ABI is required by the NDK toolchain file;
+            // without it the toolchain defaults to armeabi-v7a.
+            cmake_config.define("ANDROID_ABI", abi);
+            cmake_config.define("ANDROID_NATIVE_API_LEVEL", "21");
 
             if let Ok(ndk_path) = env::var("ANDROID_NDK_ROOT") {
                 cmake_config.define(
