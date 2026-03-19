@@ -46,11 +46,11 @@ fn main() -> Result<()> {
     let mut texture = Ktx2Texture::create(
         width,
         height,
-        1,                       // depth
-        1,                       // layers
-        1,                       // faces
-        1,                       // levels
-        VkFormat::R8G8B8A8Unorm, // vk_format (VK_FORMAT_R8G8B8A8_UNORM)
+        1,                        // depth
+        1,                        // layers
+        1,                        // faces
+        1,                        // levels
+        VkFormat::R8G8B8A8_UNORM, // vk_format (VK_FORMAT_R8G8B8A8_UNORM)
     )?;
 
     // Step 3: Set image data
@@ -73,7 +73,7 @@ fn main() -> Result<()> {
     // Create two versions with different compression settings
     let mut texture_etc1s = texture;
     let mut texture_uastc =
-        Ktx2Texture::create(width, height, 1, 1, 1, 1, VkFormat::R8G8B8A8Unorm)?;
+        Ktx2Texture::create(width, height, 1, 1, 1, 1, VkFormat::R8G8B8A8_UNORM)?;
     texture_uastc.set_image_data(0, 0, 0, image_data)?;
     texture_uastc.set_metadata("CompressionMode", b"UASTC")?;
 

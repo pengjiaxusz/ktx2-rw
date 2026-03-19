@@ -18,7 +18,7 @@
 //! # fn main() -> ktx2_rw::Result<()> {
 //!
 //! // Create a new texture
-//! let mut texture = Ktx2Texture::create(512, 512, 1, 1, 1, 1, VkFormat::R8G8B8A8Unorm)?; // RGBA8
+//! let mut texture = Ktx2Texture::create(512, 512, 1, 1, 1, 1, VkFormat::R8G8B8A8_UNORM)?; // RGBA8
 //!
 //! // Load from file
 //! let mut texture = Ktx2Texture::from_file("texture.ktx2")?;

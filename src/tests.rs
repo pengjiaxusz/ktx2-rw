@@ -436,7 +436,7 @@ fn test_basis_compression_params_builder_equivalence() {
 
 #[test]
 fn test_texture_create_valid() {
-    let result = Ktx2Texture::create(256, 256, 1, 1, 1, 1, VkFormat::R8G8B8A8Unorm); // VK_FORMAT_R8G8B8A8_UNORM
+    let result = Ktx2Texture::create(256, 256, 1, 1, 1, 1, VkFormat::R8G8B8A8_UNORM); // VK_FORMAT_R8G8B8A8_UNORM
     assert!(result.is_ok());
 
     let texture = result.unwrap();
@@ -446,23 +446,23 @@ fn test_texture_create_valid() {
     assert_eq!(texture.layers(), 1);
     assert_eq!(texture.faces(), 1);
     assert_eq!(texture.levels(), 1);
-    assert_eq!(texture.vk_format(), VkFormat::R8G8B8A8Unorm);
+    assert_eq!(texture.vk_format(), VkFormat::R8G8B8A8_UNORM);
 }
 
 #[test]
 fn test_texture_create_invalid_dimensions() {
     // Zero width should fail
-    let result = Ktx2Texture::create(0, 256, 1, 1, 1, 1, VkFormat::R8G8B8A8Unorm);
+    let result = Ktx2Texture::create(0, 256, 1, 1, 1, 1, VkFormat::R8G8B8A8_UNORM);
     assert!(result.is_err());
     assert_eq!(result.unwrap_err(), Error::InvalidValue);
 
     // Zero height should fail
-    let result = Ktx2Texture::create(256, 0, 1, 1, 1, 1, VkFormat::R8G8B8A8Unorm);
+    let result = Ktx2Texture::create(256, 0, 1, 1, 1, 1, VkFormat::R8G8B8A8_UNORM);
     assert!(result.is_err());
     assert_eq!(result.unwrap_err(), Error::InvalidValue);
 
     // Zero depth should fail
-    let result = Ktx2Texture::create(256, 256, 0, 1, 1, 1, VkFormat::R8G8B8A8Unorm);
+    let result = Ktx2Texture::create(256, 256, 0, 1, 1, 1, VkFormat::R8G8B8A8_UNORM);
     assert!(result.is_err());
     assert_eq!(result.unwrap_err(), Error::InvalidValue);
 }
@@ -470,14 +470,14 @@ fn test_texture_create_invalid_dimensions() {
 #[test]
 fn test_texture_create_excessive_dimensions() {
     // Dimensions too large should fail
-    let result = Ktx2Texture::create(100000, 100000, 1, 1, 1, 1, VkFormat::R8G8B8A8Unorm);
+    let result = Ktx2Texture::create(100000, 100000, 1, 1, 1, 1, VkFormat::R8G8B8A8_UNORM);
     assert!(result.is_err());
     assert_eq!(result.unwrap_err(), Error::InvalidValue);
 }
 
 #[test]
 fn test_texture_create_cubemap() {
-    let result = Ktx2Texture::create(256, 256, 1, 1, 6, 1, VkFormat::R8G8B8A8Unorm); // Cubemap has 6 faces
+    let result = Ktx2Texture::create(256, 256, 1, 1, 6, 1, VkFormat::R8G8B8A8_UNORM); // Cubemap has 6 faces
     assert!(result.is_ok());
 
     let texture = result.unwrap();
@@ -487,7 +487,7 @@ fn test_texture_create_cubemap() {
 
 #[test]
 fn test_texture_create_array() {
-    let result = Ktx2Texture::create(256, 256, 1, 8, 1, 1, VkFormat::R8G8B8A8Unorm); // Array with 8 layers
+    let result = Ktx2Texture::create(256, 256, 1, 8, 1, 1, VkFormat::R8G8B8A8_UNORM); // Array with 8 layers
     assert!(result.is_ok());
 
     let texture = result.unwrap();
@@ -497,7 +497,7 @@ fn test_texture_create_array() {
 
 #[test]
 fn test_texture_create_mipmapped() {
-    let result = Ktx2Texture::create(256, 256, 1, 1, 1, 9, VkFormat::R8G8B8A8Unorm); // 9 mip levels for 256x256
+    let result = Ktx2Texture::create(256, 256, 1, 1, 1, 9, VkFormat::R8G8B8A8_UNORM); // 9 mip levels for 256x256
     assert!(result.is_ok());
 
     let texture = result.unwrap();
@@ -506,7 +506,7 @@ fn test_texture_create_mipmapped() {
 
 #[test]
 fn test_texture_create_3d() {
-    let result = Ktx2Texture::create(128, 128, 64, 1, 1, 1, VkFormat::R8G8B8A8Unorm); // 3D texture
+    let result = Ktx2Texture::create(128, 128, 64, 1, 1, 1, VkFormat::R8G8B8A8_UNORM); // 3D texture
     assert!(result.is_ok());
 
     let texture = result.unwrap();
@@ -521,7 +521,7 @@ fn test_texture_create_3d() {
 
 #[test]
 fn test_texture_properties() {
-    let texture = Ktx2Texture::create(512, 256, 1, 4, 1, 8, VkFormat::R8G8B8A8Unorm).unwrap();
+    let texture = Ktx2Texture::create(512, 256, 1, 4, 1, 8, VkFormat::R8G8B8A8_UNORM).unwrap();
 
     assert_eq!(texture.width(), 512);
     assert_eq!(texture.height(), 256);
@@ -529,14 +529,14 @@ fn test_texture_properties() {
     assert_eq!(texture.layers(), 4);
     assert_eq!(texture.faces(), 1);
     assert_eq!(texture.levels(), 8);
-    assert_eq!(texture.vk_format(), VkFormat::R8G8B8A8Unorm);
+    assert_eq!(texture.vk_format(), VkFormat::R8G8B8A8_UNORM);
     assert!(texture.is_array()); // 4 layers
     assert!(!texture.is_cubemap()); // 1 face
 }
 
 #[test]
 fn test_texture_compression_status() {
-    let texture = Ktx2Texture::create(256, 256, 1, 1, 1, 1, VkFormat::R8G8B8A8Unorm).unwrap();
+    let texture = Ktx2Texture::create(256, 256, 1, 1, 1, 1, VkFormat::R8G8B8A8_UNORM).unwrap();
 
     // Newly created texture should not be compressed
     assert!(!texture.is_compressed());
@@ -567,7 +567,7 @@ fn test_texture_from_invalid_memory() {
 
 #[test]
 fn test_texture_set_image_data_empty() {
-    let mut texture = Ktx2Texture::create(256, 256, 1, 1, 1, 1, VkFormat::R8G8B8A8Unorm).unwrap();
+    let mut texture = Ktx2Texture::create(256, 256, 1, 1, 1, 1, VkFormat::R8G8B8A8_UNORM).unwrap();
     let empty_data: &[u8] = &[];
 
     let result = texture.set_image_data(0, 0, 0, empty_data);
@@ -577,7 +577,7 @@ fn test_texture_set_image_data_empty() {
 
 #[test]
 fn test_texture_set_image_data_invalid_indices() {
-    let mut texture = Ktx2Texture::create(256, 256, 1, 1, 1, 1, VkFormat::R8G8B8A8Unorm).unwrap();
+    let mut texture = Ktx2Texture::create(256, 256, 1, 1, 1, 1, VkFormat::R8G8B8A8_UNORM).unwrap();
     let data = vec![255u8; 1024];
 
     // Invalid level
@@ -598,7 +598,7 @@ fn test_texture_set_image_data_invalid_indices() {
 
 #[test]
 fn test_texture_get_image_data_invalid_indices() {
-    let texture = Ktx2Texture::create(256, 256, 1, 1, 1, 1, VkFormat::R8G8B8A8Unorm).unwrap();
+    let texture = Ktx2Texture::create(256, 256, 1, 1, 1, 1, VkFormat::R8G8B8A8_UNORM).unwrap();
 
     // Invalid level
     let result = texture.get_image_data(10, 0, 0);
@@ -622,7 +622,7 @@ fn test_texture_get_image_data_invalid_indices() {
 
 #[test]
 fn test_texture_metadata_roundtrip() {
-    let mut texture = Ktx2Texture::create(256, 256, 1, 1, 1, 1, VkFormat::R8G8B8A8Unorm).unwrap();
+    let mut texture = Ktx2Texture::create(256, 256, 1, 1, 1, 1, VkFormat::R8G8B8A8_UNORM).unwrap();
 
     let key = "test_key";
     let value = b"test_value_data";
@@ -640,7 +640,7 @@ fn test_texture_metadata_roundtrip() {
 
 #[test]
 fn test_texture_metadata_not_found() {
-    let texture = Ktx2Texture::create(256, 256, 1, 1, 1, 1, VkFormat::R8G8B8A8Unorm).unwrap();
+    let texture = Ktx2Texture::create(256, 256, 1, 1, 1, 1, VkFormat::R8G8B8A8_UNORM).unwrap();
 
     let result = texture.get_metadata("nonexistent_key");
     assert!(result.is_err());
@@ -649,7 +649,7 @@ fn test_texture_metadata_not_found() {
 
 #[test]
 fn test_texture_metadata_invalid_key() {
-    let mut texture = Ktx2Texture::create(256, 256, 1, 1, 1, 1, VkFormat::R8G8B8A8Unorm).unwrap();
+    let mut texture = Ktx2Texture::create(256, 256, 1, 1, 1, 1, VkFormat::R8G8B8A8_UNORM).unwrap();
 
     // Key with null byte should fail
     let invalid_key = "test\0key";
@@ -666,7 +666,7 @@ fn test_texture_metadata_invalid_key() {
 
 #[test]
 fn test_compress_basis_simple() {
-    let mut texture = Ktx2Texture::create(256, 256, 1, 1, 1, 1, VkFormat::R8G8B8A8Unorm).unwrap();
+    let mut texture = Ktx2Texture::create(256, 256, 1, 1, 1, 1, VkFormat::R8G8B8A8_UNORM).unwrap();
 
     // Add some dummy image data first
     let image_data = vec![128u8; 256 * 256 * 4]; // RGBA data
@@ -680,7 +680,7 @@ fn test_compress_basis_simple() {
 
 #[test]
 fn test_compress_basis_with_params() {
-    let mut texture = Ktx2Texture::create(256, 256, 1, 1, 1, 1, VkFormat::R8G8B8A8Unorm).unwrap();
+    let mut texture = Ktx2Texture::create(256, 256, 1, 1, 1, 1, VkFormat::R8G8B8A8_UNORM).unwrap();
 
     // Add some dummy image data first
     let image_data = vec![128u8; 256 * 256 * 4]; // RGBA data
@@ -699,7 +699,7 @@ fn test_compress_basis_with_params() {
 
 #[test]
 fn test_write_to_memory() {
-    let texture = Ktx2Texture::create(256, 256, 1, 1, 1, 1, VkFormat::R8G8B8A8Unorm).unwrap();
+    let texture = Ktx2Texture::create(256, 256, 1, 1, 1, 1, VkFormat::R8G8B8A8_UNORM).unwrap();
 
     let result = texture.write_to_memory();
     assert!(result.is_ok());
@@ -736,10 +736,10 @@ fn test_texture_send_sync() {
 #[test]
 fn test_various_texture_formats() {
     let formats = [
-        VkFormat::R8G8B8A8Unorm, // VK_FORMAT_R8G8B8A8_UNORM
-        VkFormat::R8G8B8Unorm,   // VK_FORMAT_R8G8B8_UNORM
-        VkFormat::R8Unorm,       // VK_FORMAT_R8_UNORM
-        VkFormat::R8G8Unorm,     // VK_FORMAT_R8G8_UNORM
+        VkFormat::R8G8B8A8_UNORM, // VK_FORMAT_R8G8B8A8_UNORM
+        VkFormat::R8G8B8_UNORM,   // VK_FORMAT_R8G8B8_UNORM
+        VkFormat::R8_UNORM,       // VK_FORMAT_R8_UNORM
+        VkFormat::R8G8_UNORM,     // VK_FORMAT_R8G8_UNORM
     ];
 
     for format in formats {
@@ -753,7 +753,7 @@ fn test_various_texture_formats() {
 
 #[test]
 fn test_texture_extreme_small_size() {
-    let result = Ktx2Texture::create(1, 1, 1, 1, 1, 1, VkFormat::R8G8B8A8Unorm);
+    let result = Ktx2Texture::create(1, 1, 1, 1, 1, 1, VkFormat::R8G8B8A8_UNORM);
     assert!(result.is_ok());
 
     let texture = result.unwrap();
@@ -766,7 +766,7 @@ fn test_texture_power_of_two_sizes() {
     let sizes = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024];
 
     for size in sizes {
-        let result = Ktx2Texture::create(size, size, 1, 1, 1, 1, VkFormat::R8G8B8A8Unorm);
+        let result = Ktx2Texture::create(size, size, 1, 1, 1, 1, VkFormat::R8G8B8A8_UNORM);
         assert!(result.is_ok(), "Failed to create {size}x{size} texture");
     }
 }
@@ -776,7 +776,7 @@ fn test_texture_non_power_of_two_sizes() {
     let sizes = [(3, 5), (7, 11), (13, 17), (100, 200), (333, 777)];
 
     for (width, height) in sizes {
-        let result = Ktx2Texture::create(width, height, 1, 1, 1, 1, VkFormat::R8G8B8A8Unorm);
+        let result = Ktx2Texture::create(width, height, 1, 1, 1, 1, VkFormat::R8G8B8A8_UNORM);
         assert!(result.is_ok(), "Failed to create {width}x{height} texture");
     }
 }
