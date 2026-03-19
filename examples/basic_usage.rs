@@ -6,13 +6,13 @@ fn main() -> Result<()> {
     // Example 1: Create a new KTX2 texture from scratch
     println!("\n1. Creating a new KTX2 texture...");
     let mut texture = Ktx2Texture::create(
-        512,                     // width
-        512,                     // height
-        1,                       // depth
-        1,                       // layers
-        1,                       // faces
-        1,                       // levels
-        VkFormat::R8G8B8A8Unorm, // vk_format (VK_FORMAT_R8G8B8A8_UNORM)
+        512,                      // width
+        512,                      // height
+        1,                        // depth
+        1,                        // layers
+        1,                        // faces
+        1,                        // levels
+        VkFormat::R8G8B8A8_UNORM, // vk_format (VK_FORMAT_R8G8B8A8_UNORM)
     )?;
 
     println!(

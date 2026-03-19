@@ -30,7 +30,7 @@ use crate::vk_format::VkFormat;
 /// # fn main() -> ktx2_rw::Result<()> {
 ///
 /// // Create a new texture
-/// let mut texture = Ktx2Texture::create(512, 512, 1, 1, 1, 1, VkFormat::R8G8B8A8Unorm)?;
+/// let mut texture = Ktx2Texture::create(512, 512, 1, 1, 1, 1, VkFormat::R8G8B8A8_UNORM)?;
 ///
 /// // Load from file
 /// let texture = Ktx2Texture::from_file("texture.ktx2")?;
@@ -135,7 +135,7 @@ impl Ktx2Texture {
 
         let create_info = ktxTextureCreateInfo {
             glInternalformat: 0,
-            vkFormat: vk_format.as_raw(),
+            vkFormat: vk_format.as_raw() as u32,
             pDfd: ptr::null_mut(),
             baseWidth: width,
             baseHeight: height,
@@ -220,9 +220,9 @@ impl Ktx2Texture {
 
     pub fn vk_format(&self) -> VkFormat {
         if self.texture.is_null() {
-            return VkFormat::Undefined;
+            return VkFormat::UNDEFINED;
         }
-        unsafe { VkFormat::from_raw((*self.texture).vkFormat).unwrap_or(VkFormat::Undefined) }
+        unsafe { VkFormat::from_raw((*self.texture).vkFormat as i32) }
     }
 
     pub fn is_array(&self) -> bool {
