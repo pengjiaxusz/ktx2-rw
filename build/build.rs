@@ -1,11 +1,11 @@
+mod constant;
+mod reuse_cached;
+
 use std::env;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-const KTX_SOFTWARE_VERSION: &str = "4.4.0";
-const KTX_SOFTWARE_URL: &str =
-    "https://github.com/KhronosGroup/KTX-Software/archive/refs/tags/v4.4.0.tar.gz";
-const FALLBACK_PATH: &str = "/tmp/ktx-software-v4.4.0.tar.gz";
+use constant::{FALLBACK_PATH, KTX_SOFTWARE_URL, KTX_SOFTWARE_VERSION};
 
 fn main() {
     let out_dir = PathBuf::from(env::var("OUT_DIR").unwrap());
@@ -19,7 +19,9 @@ fn main() {
     let ktx_lib_path = ktx_build_dir.join("lib").join(get_lib_name(&target_os));
 
     if !ktx_lib_path.exists() {
-        build_ktx_software(&out_dir, &target, &target_os, &target_arch, &target_env);
+        if !reuse_cached::try_reuse_cached_build(&out_dir) {
+            build_ktx_software(&out_dir, &target, &target_os, &target_arch, &target_env);
+        }
     }
 
     // Link the built library
