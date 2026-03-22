@@ -80,7 +80,7 @@ fn copy_directory(source: &Path, destination: &Path) -> bool {
     entries.filter_map(Result::ok).all(|entry| {
         let src = entry.path();
         let dst = destination.join(entry.file_name());
-        entry.file_type().map_or(false, |ty| {
+        entry.file_type().is_ok_and(|ty| {
             if ty.is_dir() {
                 copy_directory(&src, &dst)
             } else {

@@ -18,10 +18,8 @@ fn main() {
     let ktx_build_dir = out_dir.join("KTX-Software-build");
     let ktx_lib_path = ktx_build_dir.join("lib").join(get_lib_name(&target_os));
 
-    if !ktx_lib_path.exists() {
-        if !reuse_cached::try_reuse_cached_build(&out_dir) {
-            build_ktx_software(&out_dir, &target, &target_os, &target_arch, &target_env);
-        }
+    if !ktx_lib_path.exists() && !reuse_cached::try_reuse_cached_build(&out_dir) {
+        build_ktx_software(&out_dir, &target, &target_os, &target_arch, &target_env);
     }
 
     // Link the built library
