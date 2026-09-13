@@ -44,7 +44,9 @@ fn main() {
     link_system_libraries(&target_os, &target_env, &target);
 
     // Configure bindgen
-    setup_bindgen(&out_dir, &target, &ktx_build_dir);
+    if !out_dir.join("bindings.rs").exists() {
+        setup_bindgen(&out_dir, &target, &ktx_build_dir);
+    }
 
     // Invalidation rules
     println!("cargo:rerun-if-changed=build");
