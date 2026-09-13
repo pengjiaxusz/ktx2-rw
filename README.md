@@ -115,12 +115,25 @@ The library now builds KTX-Software from source at compile time, providing excel
 
 The first build downloads and compiles KTX-Software (~5-10 minutes), but subsequent builds use cached results.
 
+### Build Cache & Worktree Sharing
+
+`ktx2-rw` automatically detects and reuses precompiled `KTX-Software` artifacts across profiles (`debug`/`release`), custom target directories, and **sibling Git worktrees**, eliminating redundant 5-10 minute compilations when switching branches or worktrees.
+
+Key safeguards:
+- **Target Triple Isolation**: Cross-compilation targets never collide with host architectures.
+- **Platform Binary Validation**: Validates existence and integrity of platform libraries (`.lib`, `.a`, `.dylib`, `.framework`, `.so`).
+- **Lean Copying**: Skips intermediate compiler files (~30MB), copying only required runtime libraries, headers, and bindings.
+
+For detailed architecture, design decisions, and safety guarantees, see [docs/BUILD_CACHE.md](docs/BUILD_CACHE.md).
+
 ### Build Configuration
 
 The build process can be customized with environment variables:
 
 | Variable | Values | Default | Description |
 | -------- | ------ | ------- | ----------- |
+| `KTX_NO_CACHE_REUSE` | `1`, `true` | `0` | Completely bypass build artifact cache and compile KTX-Software from clean source |
+| `KTX_NO_WORKTREE_CACHE` | `1`, `true` | `0` | Disable searching across sibling Git worktrees (only reuse within current target dir) |
 | `KTX_FEATURE_SSE` | `0`, `off`, `false`, `no` | `on` | Disable SSE optimizations for Basis Universal encoder |
 
 **When to disable SSE:**
